@@ -1,0 +1,326 @@
+---
+title: "SML 201 Problem Set 1 "
+author: ''
+date: "`r Sys.Date()`"
+subtitle: 
+output:
+  pdf_document:
+    dev: png
+    fig_caption: yes
+    toc: yes  
+    toc_depth: '4'  
+  html_document:
+    df_print: paged
+    toc: yes 
+    toc_depth: '4'   
+geometry: margin=1in
+fontsize: 10pt
+editor_options:
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.align="center", fig.height=4.5, fig.width=5, collapse=T, comment="", prompt=F, echo = T, cache=F, autodep=T, tidy=F, tidy.opts=list(width.cutoff=63), dev='png', dpi = 100)
+options(width=63)
+```
+
+**Problem Set 1 is due by 11:00pm EST on Thursday September 18.** Please submit **both a .pdf and a .rmd** files on Gradescope by the deadline.
+
+**Please do not email your work to any of the instructors in any case** (unless you have no access to Gradescope at the time when the assignment is due--in this case please email the Head TA (see the syllabus for contact info) both copies of your .pdf and .rmd files before the deadline and upload the unaltered copies of the files to Gradescope as soon as you regain access to Gradescope).  We need your files to be on Gradescope in order to grade them.  Thus, even if you are late, please still submit the files on Gradescope.
+
+This assignment can be completed in groups of up to 3 students. Feel free to use Ed Discussion to recruit team members.  It is okay to work by yourself, if this is preferred.   You are welcome to get help (you can either ask questions on Ed Discussion or talk to the instructors during office hours) from the instructors; however, please do not post code/solutions on Ed Discussion on a public post.  Please see the *Academic Integrity Policy* tab on Canvas about the course policy.
+
+
+For **problem sets and projects** you may not work with a given student on more than **two assignments**.  For example, if you work with student A on Problem set 1 and Project 1, then you cannot work with student A on any other problem sets and projects. 
+
+
+When working in a group it is your responsibility to make sure that you are satisfied with all parts of the report and the submission is on time (e.g., we will not entertain arguments that deficiencies are the responsibility of other group members).  We expect that you each work independently first and then compare your answers with each other once you all finish, or help each other if someone in your group gets stuck.  Failing to make contributions and then putting your name on a report will be considered a violation of the honor code.  **Please do not divide work among group mates.**  Everyone in your group is responsible for being able to explain the solutions in the report.
+
+For all parts of this project, you **MUST** use R commands to print the output as part of your R Markdown file. You are not permitted to find the answer in the R console and then copy and paste the answer into your report.  **All code and outputs should be visible on your pdf file.**
+
+**If you are completing this project in a group**, please have only **one** person in your group turn in the .Rmd and .pdf files.  Make sure that this person selects the names of all the group mates on Gradescope--if you are not sure about how to make a group submission please see the video posted under *Assignments > Precept submission instructions* on Canvas.  To receive full credit for this assignment, you must select the pages properly for each problem on Gradescope; again, if you are not sure about how to do this, please watch the video mentioned.
+
+Late problem sets and projects (i.e., being late even after you use a late pass) will be penalized at intervals rounded up to multiples of 24 hours. You will receive a 10% deduction on the score for each 24-hour-late-interval.  For example, if you are 3 hours late, 10% off or if you are 30 hours late, 20% off.
+
+----
+
+Please type your name(s) after "Digitally signed:" below the honor pledge to serve as digital signature(s). 
+
+> I pledge my honor that I have not violated the honor code when completing this assignment.
+
+Digitally signed:
+Brittney Barnwell
+----
+
+**When reporting numerical findings in the [narrative part]{.underline} of your report, please round answers to an appropriate number of digits.  This means that usually having 2 decimal places (e.g., 45.71) is good; however, if the answer has a lot of leading zeros (e.g., 0.000034), you might want to include at 2 or more non-zero digits. Just make sure that you do not report answers in long strings of numbers (e.g., 5.043289); this will make your report look unprofessional.**   When printing out a data frame as part of an answer, you can use `print.data.frame(your_df, digits = 2)`; this will allow you to print out the entire data frame `your_df` and suggest to `R` that you want to have *at least 2* significant digits--you might want to adjust the value for `digits` based on individual cases.  **Remember not to round intermediate calculations and please avoid hard-coding.**  For example, if we updated the dataset *loan_data.csv* with additional rows, your code should still work without any modifications.  
+
+
+----
+
+## Report quality
+
+Unless otherwise specified, please provide code and the output of the code to support all your answers.
+
+In general if your report contains plots, in order to receive full credits, please have sensible titles and axis labels for all your graphs and adjust values for all the relevant graphical parameters so that your plots are informative.  Also, all answers must be written in complete sentences.
+
+### (-3 pts each: code does not run; code does not have proper annotations; student did not select pages correctly for each question on Gradescope)  
+### (-2 pts each: answers are not in complete sentences; report includes an unnecessarily large chunk of a dataset.)
+
+
+## Before you start: for-loops are not allowed for this problem set. 
+
+-------
+
+
+## Background information on LendingClub
+
+
+In this problem set we will explore a subset of a dataset provided by LendingClub (https://www.lendingclub.com/).  The dataset includes loan cases from 2008-2015.  
+
+
+### The company
+
+*LendingClub is a financial services company headquartered in San Francisco, California. It was the first peer-to-peer lender to register its offerings as securities with the Securities and Exchange Commission (SEC), and to offer loan trading on a secondary market. At its height, LendingClub was the world's largest peer-to-peer lending platform. The company reported that $15.98 billion in loans had been originated through its platform up to December 31, 2015.*
+
+(Ref: https://en.wikipedia.org/wiki/LendingClub) 
+
+### How it works
+
+This is how LendingClub works (the steps below were taken from LendingClub's former website (https://www.lendingclub.com/public/how-peer-lending-works.action)):
+
+* Customers interested in a loan complete a simple application at LendingClub.com
+* [LendingClub] leverage[s] online data and technology to quickly assess risk, determine[s] a credit rating and assign[s] appropriate interest rates. Qualified applicants receive offers in just minutes and can evaluate loan options with no impact to their credit score
+* Investors ranging from individuals to institutions select loans in which to invest and can earn monthly returns
+
+
+## Objectives of this problem set
+
+In this problem set we would like to answer these questions:
+
+* Why do people borrow a loan?
+* How big a loan do people usually apply for?
+* How does LendingClub manage risky loans?
+
+
+## Instructions for the problem set
+
+Read the dataset *loan_data.csv* into Rtudio; name this object `loancase`.  Make sure to check that you have 887,379 rows and 5 columns for `loancase`. Perform the usual steps that we did in lecture to get familiar with the dataset; e.g., you should find out the object type of `loancase`, the data types of the elements in each column and the summary statistics for each column etc.  Also, you should take a look at the first and the last few rows of the dataset to get an idea on the structure of the dataset.
+
+Below are the description for the variables in `loancase`:
+    
+*  **id** - A unique LendingClub assigned ID for the loan listing
+*  **funded_amnt** - The total approved loan amount (in dollars) for the applicant at the time when the data was recorded 
+*  **grade** -	LendingClub assigned loan grade
+*  **int_rate** - The interest Rate on the loan
+*  **purpose** - A category provided by the borrower for the loan request  
+
+## Qusetion 1 <!---25 pts ---> Getting familiar with the dataset
+
+### Part a (5 pts) Data quality check
+
+Check that you have the correct numbers of rows and columns.  What is the R object type of `loancase`?  What is the data type of the elements in each column?
+
+```{r question-1a}
+loancase = read.csv("/Users/brittneybarnwell/Downloads/loan_data.csv")
+class(loancase)
+nrow(loancase)
+ncol(loancase)
+class(loancase$id)
+class(loancase$funded_amnt)
+class(loancase$grade)
+class(loancase$int_rate)
+class(loancase$purpose)
+
+```
+
+(Fill in blanks.) `loancase` has 887379 rows and 5 columns. The
+R object type of `loancase` is data.frame.  The data type of the elements in each column is, respectively:  id = integer, funded_amount = integer, grade = character, int_rate = numeric,
+and purpose = character
+
+### Part b  Loan amount distribution
+
+#### Part i (3 pts)
+
+Please provide numbers to describe the shape of the (approved) loan amount distribution.  (You will need to decide on which set of numeric summary numbers will be the most appropriate to describe a dataset like this.)
+
+``` {r question-1bi}
+library(ggplot2)
+ggplot(loancase) +
+  geom_histogram(mapping = aes(x = funded_amnt, y = after_stat(density)),
+               color = 'white', fill = 'steelblue', binwidth = 1000) +
+  labs(title = "Loancase Loan Amount Distribution")
+```
+
+```{r summary-of-funded_amnt}
+summary(loancase$funded_amnt)
+```
+>.The plot shows varying levels of SES and reasons why someone may need to take out a 
+loan because there is a higher concentration of values
+towards lower funded_amnts than higher ones. Individuals tend to take out smaller
+loans more often which is why 10,000 is the highest bar. Also, the rounded values on the
+graph show a spike in density (i.e. 10000, 20000, 25000, etc) which makes sense because
+people would rather take out rounded/whole number amounts to keep things easy. The
+graph is also asymmetric which is interesting to note
+
+
+#### Part ii (4 pts)
+
+Choose the correct answer:
+
+(Multiple choice question) According to your answer in Part i, it is likely that 
+
+    (A.) the loan amount distribution is roughly symmetric;
+    (B.) the loan amount distribution has a longer left tail;
+    (C.) the loan amount distribution has a longer right tail;
+    (D.) the `loancase` dataset contains some NA values;
+    (E.) the minimum of the loan amounts is less than $200.
+    
+No explanation is required.
+
+**Answer**:  
+>. Answer: C)
+
+### Part c (13 pts) Outliers in the interest rate data
+
+Are there outliers for the `int_rate` variable?  If yes, what percentage of the loan cases are outliers?  If not, please explain how you arrived at the conclusion.
+
+``` {r question-1c}
+library(dplyr)
+library(ggplot2)
+ggplot(loancase, mapping = aes(group = grade, x = grade, y = int_rate,
+               color = factor(grade)))+
+  geom_boxplot() +
+  labs(title = "Loancase Loan Amount Distribution")
+
+Q1 <- loancase |>
+  summarize(Q1 = quantile(int_rate, probs = 0.25, na.rm = T)) |>
+  pull(Q1)
+Q3 <- loancase |>
+  summarize(Q3 = quantile(int_rate, probs = 0.75, na.rm = T)) |>
+  pull(Q3)
+IQR <- Q3 - Q1
+
+outliers = loancase |>
+  filter(int_rate > Q3 + 1.5 * IQR | int_rate < Q1 - 1.5 * IQR)
+
+percentage = (nrow(outliers) / nrow(loancase)) * 100
+```
+>. Yes, there are outliers for int_rate across multiple grades, 0.71% of the loan cases are outliers
+
+## Question 2 <!---40 pts---> 
+
+
+### Part a (5 pts) Why do people borrow?
+
+List the unique categories in `purpose`, in a descending order of the number of cases.  It is okay to just print them out in the code chunk; you do not need to include them again in the narrative part of your report.  
+
+What are the top two reasons for people to borrow?
+```{r question-2a}
+loancase |>
+  count(purpose) |>
+  arrange(desc(n))
+```
+>. The top two reasons for people to borrow is for debt_consolidation and a credit_card
+
+
+
+### Part b (10 pt) Loan risk
+
+A *loan grade* takes into account a combination of factors; these factors include, but not limited to:
+
+* Information provided on the loan application
+* Information provided by credit bureaus
+* Credit score, which predicts the likelihood that borrowers will make on time payments until loans are fully repaid
+* Debt-to-income ratio
+* Credit history length, the number of other accounts currently open, and usage and payment history with those accounts
+* Recent credit activity, including how many other credit inquiries have been initiated over the past six months
+
+
+In general the higher the loan grade the more risky LendingClub thinks the loan is; e.g., grade A is for the least risky loans and grade G is for the most risky ones. 
+
+Does LendingClub invest more in the less risky loans (i.e., the three least  risky loans ) or the more risky loans (i.e., the three most risky loans)?  Answer this question by calculate the total loan dollar amount for each grade category (it is okay to just show these numbers in the output of your code, but remember to answer the question).
+
+```{r question-2b}
+loancase |>
+  select(grade, funded_amnt) |>
+  group_by(grade) |>
+  summarise(total_loan = sum(funded_amnt, na.rm = T))
+```
+>. Yes, LendingClub invests more in the less risky loans than the more risky one
+
+### Part c Risk v.s. profit
+
+We want to understand how LendingClub manage the increased risk of some of the loans.  
+
+#### Part i (15 pt)
+
+Calculate the five-number summary of the interest rates for each loan grade.  You are not allowed to do the calculation on each of the loan grade separately.
+
+Hint: the `summarise()` function can be used to calculate multiple quantities simultaneously.  Here is an example:
+
+```{r example, message = F}
+library(dplyr)
+airquality %>% 
+    group_by(Month) %>% 
+    summarise(no_days = length(Ozone), avg_ozone = mean(Ozone, na.rm = T))
+```
+
+```{r}
+loancase |>
+  group_by(grade) |>
+  summarise(min = min(int_rate, na.rm = T),
+            Q1 = quantile(int_rate, probs = 0.25, na.rm = T),
+            median = median(int_rate, na.rm = T),
+            Q3 = quantile(int_rate, probs = 0.75, na.rm = T),
+            max = max(int_rate, na.rm = T))
+```
+
+
+#### Part ii (10 pt)
+
+Based on your findings in Part i, comment on the pattern on the interest rate distributions. Is there a shift in the distribution when we move from the least risky loans to the most risky loans?  If yes, explain in what direction the shift is (i.e., do risky loans seem to have lower/about the same/higher interest rates?).  If not, explain how the pattern is not observed. 
+
+>. The riskiest loan G has the highest minimum int_rate at 16.6. Loans B-F have the same minimum int_rate. Overall, there
+is more consistency amongst the central portion of the dataset so there is less variability amongst the riskier loans. There is a very gradual undramatic increase/shift in the distribution when we move from the least risky loans to the most risky. Risky loans appear to have higher interest rates
+than less risky loans
+
+## Question 3 <!---35 pts--->
+
+### Part a (15 pts) Loan grade percentages by purpose category
+
+For each purpose category we want to investigate how the loan cases are divided into cases of different loan grades. For example, do credit card loans tend to have higher proportion of risky loans compared to other categories?
+
+For each purpose category calculate the percentage of loans for each loan grade. For example, for the car category, please find out the percentage of the loans in grade A, the percentage of the loans in grade B, and so on. Please print the entries for all purpose categories and for all grades in your output.
+
+Hint: The section Grouped tibbles on the help page of mutate() might be helpful.
+
+```{r}
+loancase |>
+  select(purpose, grade) |>
+  group_by(purpose, grade) |>
+  summarise(total = n()) |>
+  mutate(loan_percent = (total / sum(total)) * 100)
+```
+
+
+
+
+### Part b (20 pts) The highest risk categories
+
+What are the top two purpose categories that have the highest proportions of the E, F, G grade loan cases combined?
+
+To answer this question, you should calculate the combined percentage for each purpose category.  Please make sure that you print the percentage for each of the purpose category and list the percentages in a decreasing order in your output.  There is no need to include all the percentages in the narrative part of your report, but please mention the percentages for the top two categories.
+
+```{r}
+loancase |>
+  select(purpose, grade) |>
+  filter (grade == "E" | grade == "F" | grade == "G") |>
+  group_by(purpose) |>
+  summarise(total = n()) |>
+  mutate(loan_percent = (total / sum(total)) * 100) |>
+  arrange(desc(loan_percent))
+```
+
+>. Based on the data, the top two purpose categories with the highest proportions of the E, F, G grade loan cases are debt_consolidation and credit_card
+
+

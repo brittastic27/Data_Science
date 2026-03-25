@@ -1,0 +1,141 @@
+---
+title: "Week 7 Pre-lecture exercises"
+author: ''
+date: ""
+output:
+  pdf_document:
+    fig_caption: yes
+  html_document:
+    df_print: paged
+geometry: margin=1in
+fontsize: 10pt
+editor_options:
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.align="center", fig.height=4.5, fig.width=5, collapse=TRUE, comment="", prompt=FALSE, echo = TRUE, cache=F, autodep=TRUE, tidy=FALSE, tidy.opts=list(width.cutoff=50))
+options(width=75)
+```
+
+Remember that you can adjust the speed and the size of the videos.  Please knit the .rmd file and **submit your solutions in a .pdf** file on Canvas.
+
+Please watch the videos from the *Week7* playlist under the *Panopto Video* tab on Canvas. 
+
+In this assignment, we will explore the small-sample effect—the tendency for statistical results to be less reliable and for sample data to be less representative of the population when the sample size is small.
+
+1. (This exercise was inspired by a real-life story. A colleague from another department once shared his concern that his students did not understand the small-sample effect. As a result, the enrollment in his class increased by as much as fivefold, simply because he had received a perfect course rating in the previous semester when only two students filled out the form.) The table below shows the distribution of course ratings for a particular course. Recall that we can interpret the probabilities as long-term relative frequencies. Thus, if we could observe all the students who have taken the course in the past, present, and future, we would expect 46.67% of them to give the course a rating of 5, 23.33% to rate it 4, 16.67% to rate it 3, 3.33% to rate it 2, and 10% to rate it 1.
+
+
+
+| course_rating | probability |
+|:--------------|:------------|
+| 1             | 0.10000     |
+| 2             | 0.03333     |
+| 3             | 0.16667     |
+| 4             | 0.23333     |
+| 5             | 0.46667     |
+
+
+Computer simulations are ways to imitate real-world systems, processes, or phenomena using mathematical formulation and algorithms. They allow researchers to explore how a system behaves under various conditions—without physically carry out experiments.
+
+We will use simulations in this assignment to study how the sample data varies and whether they are representative of the population when the sample size is small.  We have defined the vector `dat` below.  Please convince yourself that drawing random samples from this vector could mimic observing the course ratings of some of the students who have taken the course.  Should the samples be drawn with or without replacement?
+
+
+```{r}
+# We name this vector `dat`, not `data` 
+# because `data()` is a function in `R`
+dat = c(1, 1, 1, 2, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 
+        5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5 ,5, 5)
+length(dat)
+table(dat)
+table(dat)/length(dat)
+mean(dat)
+```
+
+> Drawing random samples from a vector of student course ratings can simulate what a random student may have rated a course. The randomness helps to simulate the real-world system of course ratings. The samples should be drawn without replacement as to not count the same student's rating more than once and to ensure every students' rating is observed.
+
+We want to draw a histogram to investigate the distribution of the data in `dat` .  Recall that the input for `ggplot()` has to be a data frame.  Therefore, we will need to construct a data frame, `dat_df`, with the data in `dat` for the code below.
+
+
+Create `dat_df` and fill in the values for the input arguments `x` and `binwidth` below.  What would be a reasonable number for `binwidth`?  
+
+If you have forgotten how to create a tibble, it will be helpful to review Ch2.2.
+
+
+We might not remind you this again in future assignments: Please remember to remove `eval = F` before you knit the file.  
+
+```{r}
+library(dplyr)
+library(ggplot2)
+
+dat_df <- data.frame(dat)
+
+ggplot(dat_df) + 
+  geom_histogram(mapping = aes(x = dat, 
+                               y = after_stat(density)), 
+                 binwidth = 1, color = 'white') +
+  labs(x = 'data point values', 
+       title = 'Distribution of data values')
+```
+
+
+
+2. We want to run simulations to see whether the course ratings could be representative of the true course average rating if only two students fill out the course evaluation each semester.  
+
+
+Use the seed below, and sample 2 numbers from `dat` for each semester.  Do this for 10 semesters.  Name the output list as `samplist`.  Should the draws be taken with or without replacement?
+
+Hint: If you just want to repeat a process without varying any values related to the process, you can create a function whose output value is not affected by the function input this way:
+
+```{r}
+purrr::map(1:3, function(x){sample(1:6, size = 1)})
+```
+
+Your output should be a list with 10 elements, each element is a vector of length 2.  The vector contains the course ratings of the two students who filled out the survey.
+
+```{r}
+library(purrr)
+set.seed(8901)
+samplist <- map(1:10, function(x){sample(dat, size = 2, replace = F)})
+samplist
+```
+
+
+3. We want to see the distribution of the course average ratings across 10 semesters.  
+Create a vector of length 10 by calculating the mean course rating for each of the 10 semesters in `samplist`.  Create a 10-by-1 data frame called `course_r_df` by using the `tibble()` function.  The data frame should have 10 rows, each row contains the average course rating of the semester.
+
+Copy and paste and modify the ggplot code for question 1, and plot the distribution of the average course rantings for the 10 semester instead.  Notice how different the histogram looks compared to the one for Question 1.
+
+What is the mean of the ten course rating averages?  What proportion of the ten course rating averages are at least as high as the true average rating shown in Question 1?
+
+```{r}
+course_r <- map_dbl(samplist, .f = mean)
+course_r_df <- tibble(course_r)
+course_r_df
+
+ggplot(course_r_df) + 
+  geom_histogram(mapping = aes(x = course_r, 
+                               y = after_stat(density)), 
+                 binwidth = 0.5, color = 'white') +
+  labs(x = 'Average course ratings', 
+       title = 'Distribution of the average course ratings across semesters')
+
+mean(course_r)
+mean(course_r >= mean(dat))
+```
+
+
+
+4. Calculate the mean and SD of each of the 10 samples created in question 2. Displayed the results in a data frame, one column for the mean and another for the SD. (Hint: It is important to give names to the elements so that `R` knows which value goes to which column of the data frame. See the example in Ch 5.1.)
+
+```{r}
+stats_q2 <- tibble(
+  mean = map_dbl(samplist, mean),
+  sd = map_dbl(samplist, sd)
+)
+stats_q2
+```
+
+
+

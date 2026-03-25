@@ -1,0 +1,566 @@
+---
+title: "SML 201 Problem Set 2 "
+author: ''
+date: "`r Sys.Date()`"
+subtitle: 
+output:
+  pdf_document:
+    dev: png
+    fig_caption: yes
+    toc: yes  
+    toc_depth: '4'  
+  html_document:
+    df_print: paged
+    toc: yes 
+    toc_depth: '4'   
+geometry: margin=1in
+fontsize: 10pt
+editor_options:
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.align="center", fig.height=4.5, fig.width=8, collapse=T, comment="", prompt=F, echo = T, cache=F, autodep=T, tidy=F, tidy.opts=list(width.cutoff=63), dev='png', dpi = 300, out.height = '50%', out.width = '100%')
+options(width=63)
+```
+
+----
+
+**Problem Set 2 is due by 11:00pm EST on Thursday October 1**.
+
+----
+
+## Special submission instructions
+
+Please have a look at the table of contents for this assignment.  You should see that there are two sets of questions in this problem set: The ones marked as "bonus" and the ones that aren't.  The ones that are not marked as bonus are the required questions for Problem Set 2; these questions total to 100 points for Problem Set 2.  
+The bonus questions also total to 100 points.  You may complete them to get extra points added to your midterm 1 score.  For example, if your midterm 1 score is 60 and your bonus Problem Set 2 score is 95, your updated midterm 1 score will be $60 \times .8 + 95 \times .2 = 67$.  
+
+If you decide to attempt the bonus questions, please include the solutions to all the questions, bonus or not, in one .rmd/.pdf.    There are **4 submission portals** on Gradescope: *Regular Pset 2 PDF*, *Regular Pset 2 RMD*, *Bonus Pset 2 PDF*, *Bonus Pset 2 RMD*.  You may submit the same pdf file to both *Regular Pset 2 PDF* and *Bonus Pset 2 PDF* (and similarly for the rmd file).  Just make sure to select the correct pages for the relevant questions.
+
+Your group mate(s) for Problem Set 2 might not want to attempt the bonus questions. In that case, you can still submit for the bonus questions for yourself.
+
+----
+
+**Please do not email your work to any of the instructors in any case** (unless you have no access to Gradescope at the time when the assignment is due--in this case please email the Head TA (see syllabus for contact info) both copies of your .pdf and .rmd files before the deadline and upload the unaltered copies of the files to Gradescope as soon as you regain access to Gradescope).  We need your files to be on Gradescope in order to grade them.  Thus, even if you are late, please still submit the files on Gradescope.
+
+This assignment can be completed in groups of up to 3 students. Feel free to use Ed Discussion to recruit team members.  It is okay to work by yourself, if this is preferred.   You are welcome to get help (you can either ask questions on Ed Discussion or talk to the instructors during office hours) from the instructors; however, please do not post code/solutions on Ed Discussion on a public post.  Please see the *Academic Integrity Policy* tab on Canvas about the course policy.
+
+
+For **problem sets and projects** you may not work with a given student on more than **two assignments**.  For example, if you work with student A on Problem set 1 and Project 1, then you cannot work with student A on any other problem sets and projects. 
+
+
+When working in a group it is your responsibility to make sure that you are satisfied with all parts of the report and the submission is on time (e.g., we will not entertain arguments that deficiencies are the responsibility of other group members).  We expect that you each work independently first and then compare your answers with each other once you all finish, or help each other if someone in your group gets stuck.  Failing to make contributions and then putting your name on a report will be considered a violation of the honor code.  **Please do not divide work among group mates.**  Everyone in your group is responsible for being able to explain the solutions in the report.
+
+For all parts of this project, you **MUST** use R commands to print the output as part of your R Markdown file. You are not permitted to find the answer in the R console and then copy and paste the answer into your report.  **All code and outputs should be visible on your pdf file.**
+
+**If you are completing this project in a group**, please have only **one** person in your group turn in the .Rmd and .pdf files.  Make sure that this person selects the names of all the group mates on Gradescope--if you are not sure about how to make a group submission please see the video posted under *Assignments > Precept submission instructions* on Canvas.  To receive full credit for this assignment, you must select the pages properly for each problem on Gradescope; again, if you are not sure about how to do this, please watch the video mentioned.
+
+Late problem sets and projects (i.e., being late even after you use a late pass) will be penalized at intervals rounded up to multiples of 24 hours. You will receive a 10% deduction on the score for each 24-hour-late-interval.  For example, if you are 3 hours late, 10% off or if you are 30 hours late, 20% off.
+
+
+----
+
+Please type your name(s) after "Digitally signed:" below the honor pledge to serve as digital signature(s). 
+
+> I pledge my honor that I have not violated the honor code when completing this assignment.
+
+Digitally signed:
+Brittney Barnwell
+----
+
+**When reporting numerical findings in the [narrative part]{.underline} of your report, please round answers to an appropriate number of digits.  This means that usually having 2 decimal places (e.g., 45.71) is good; however, if the answer has a lot of leading zeros (e.g., 0.000034), you might want to include at 2 or more non-zero digits. Just make sure that you do not report answers in long strings of numbers (e.g., 5.043289); this will make your report look unprofessional.**   When printing out a data frame as part of an answer, you can use `print.data.frame(your_df, digits = 2)`; this will allow you to print out the entire data frame `your_df` and suggest to `R` that you want to have *at least 2* significant digits--you might want to adjust the value for `digits` based on individual cases.  **Remember not to round intermediate calculations and please avoid hard-coding.**  For example, if we updated the dataset *loan_data.csv* with additional rows, your code should still work without any modifications.  
+
+
+----
+
+## Report quality
+
+Unless otherwise specified, please provide code and the output of the code to support all your answers.
+
+In general if your report contains plots, in order to receive full credits, please have sensible titles and axis labels for all your graphs and adjust values for all the relevant graphical parameters so that your plots are informative.  Also, all answers must be written in complete sentences.
+
+### (-3 pts each: code does not run; code does not have proper annotations; student did not select pages correctly for each question on Gradescope)  
+### (-2 pts each: answers are not in complete sentences; report includes an unnecessarily large chunk of a dataset.)
+
+
+
+
+## Before you start: for-loops are not allowed for this project. Please install the packages, {png} and {grid}, before you knit this .rmd file.  Also, please make sure that you place the three .png files that were posted with this project in the same folder as this .rmd file.
+
+-------
+
+We will use the `bdims` dataset from the {openintro} package for questions 1-3.  The dataset consists of body girth and skeletal diameter measurements, as well as the age, weight, height and gender on 507 (247 men and 260 women) physically active individuals.  
+
+(Hypothetical) Clair works for the Red Cross in an underdeveloped country.  Each day she travels to the villages in the area to see adult patients.  For some of the medicines in order to prescribe the correct dosages, Clair will need to know the approximate weight of the patient.  However, it is not always feasible for her to carry a scale with her for her visits.  In this problem set we will develop a formula for Clair to use so that she could get a rough estimate on a patient's weight (in kilograms) by using the the sum of the patient's knee diameters (in centimeters)--it is much easier to carry a ruler around than a scale.  
+
+You can assume that the dataset `bdims` contains the information on all the adult residents of the villages that Clair visits.
+
+As usual please read the info on the help manual about the dataset.  The variables that we are going to use for this project are: `kne_di`, `age`, `wgt`, and `sex`.  Below are the variable definitions from the help manual.
+
+
+* **kne_di**:  A numerical vector, respondent's knee diameter in centimeters, measured as sum of two knees.
+* **age**:  A numerical vector, respondent's age in years.
+* **wgt**:  A numerical vector, respondent's weight in kilograms
+* **sex**:  A categorical vector, 1 if the respondent is male, 0 if female.
+
+For simplicity, we will use the variable name `Knee Diameter` when referring to 'kne_di', even though 'kne_di' actually means "the sum of knee diameters".
+
+# Question 1 Investigate the relationships between the variables
+
+
+```{r message = F}
+# read in packages needed
+library(openintro)
+library(ggplot2)
+library(dplyr)
+library(GGally)
+library(purrr)
+```
+
+```{r}
+head(bdims)
+dim(bdims)
+class(bdims)
+```
+
+Before building a linear model, it is important to investigate the relationship between the Y- and the potential X- variables in the model, since one of the assumptions of a linear model is the linearity between the dependent and independent variables. 
+
+## Part a (4 pts)
+
+Extract the variables needed for problems 1-3 and name the resulting data frame `body.dims`.  Make sure that the variables are in the correct data types--if not, you should convert them into the correct data types.
+
+```{r}
+body.dims <- bdims |>
+  select(kne_di, age, wgt, sex)
+body.dims$sex <- as.factor(body.dims$sex)
+body.dims
+```
+
+
+
+## Part b (15 pts: 10 pts for matrix plot; 5 pts for answer)
+
+(If you have not yet, make be sure to watch the videos on `ggpairs()` on Canvas (Kaltura Media Gallery>PLE4a). Use the `ggpairs()` function to make a matrix plot to investigate the pairwise relationship between the variables. 
+
+* Use **different colors** to represent **different genders**, and adjust the **transparency** of the graphs so that we can compare the patterns for different genders.  
+* For the graphs that are **above the diagonal**, if both the x- and y-variables are **continuous**, please provide the **correlation** coefficient values for the two variables. 
+* For the graphs that are **below the diagonal**, if both the x- and y-variables are **continuous**, please make a **scatterplot** of the two variables.  
+* Adjust the **size of the points** on the scatterplots so that the graphs do not look too crowded. 
+* Include a **legend**.  Note that if you are taking the legend from, say, the [1,1] tile.  If the colors in the [1,1] tile was "filled" rather than "colored", you will need use the `scale_fill_discrete()` function if you want to change the legend labels.  
+
+
+Does either of the variables Knee Diameter and Age have a strong linear relationship with the variable Weight?  Please *use only the scatterplots* to answer this question. Remember that you can adjust the size of a graph with the `fig.height` and `fig.width` arguments for a code chunk.
+
+
+```{r}
+ggpairs(body.dims,
+        mapping = aes(color = sex, alpha = .4),
+        upper = list(continuous = "cor"),
+        lower = list(continuous = "points", size = 1),
+        legend = c(1,1)) +
+  labs(title = "Matrix plot for Body Dimensions Dataset") +
+  scale_fill_discrete(labels = c("Female", "Male")) +
+  theme(legend.position = "bottom")
+  
+```
+
+>. Based on the scatterplot, knee diameter has a strong linear relationship with weight while age has a less strong linear relationship with weight (since the points are more scattered and less contained in a continuous linear way)
+
+## Part c (8 pts: 2 for multiple choice question; 6 for the explanation)
+
+Based on the scatterplots in Part b and without doing any calculations, choose the correct answer for this question:  The correlation between the two variables Weight and Knee Diameter should be
+
+  (A.) Negative  
+  (B.) Positive  
+  (C.) Cannot be determined without any calculations  
+
+Explain your reasoning in one sentence. No code is required for this part.
+
+**Answer:**
+
+>. (B.) because the correlation coefficient between the two variables, as displayed in the matrix plot, is 0.766 which is positive. Also, there's a clear upwards trend within each sex for Weight and Knee Diameter which represents a positive slope and correlation coefficient.
+
+
+## Part d (8 pts)
+
+Based on the scatterplots in Part b and without doing any calculations, answer this question:  Is the relationship between the two variables, Weight and Knee Diameter, linear within each Sex category?  
+
+Based on the matrix plot in Part b, what is the correlation coefficient between Weight and Knee Diameter for all the residents?  What is this number for just the male residents, and what about for the female residents?
+
+No code is required for this part.
+
+
+**Answer**: 
+
+>. Yes, the relationship between the two variables, Weight and Knee Diameter, are linear within each sex category because the scatterplot, as displayed in the larger matrix plot, show a clear upwards trend for each sex. The correlation coefficient between Weight and Knee Diameter is 0.766 for all residents, 0.511 for males, and 0.778 for females.
+
+# Question 2  Model fitting
+
+Use the `body.dims` dataset.  For each of the following models, report the fitted model (i.e., report the formula that you will use to predict the weight of a chosen person; please do not simplify numerical expressions) and answer the additional questions listed in each part.
+
+
+## (Bonus) Part a: Model 1 
+
+
+
+We would like to model a person's weight with
+
+$$
+Weight = \beta_0 + \beta_{Knee Diameter}  Knee Diameter + Error
+$$
+
+
+### Part (i) (5 pts)
+
+(complete the following.)  According to the data that we have, the fitted model is 
+
+$$
+\widehat{Weight} = -73.559 + 7.586(Knee Diameter) + Error
+$$
+
+```{r}
+lm(wgt~kne_di, body.dims)
+```
+
+
+
+### Part (ii) (5 pts)
+
+Interpret your fitted model: on average if person A's knee diameter sum is 1 cm longer than person B's knee diameter sum, how much heavier or lighter (in kilograms) do you expect person A will be compared to person B? No code is required for this part.
+
+**Answer**:
+
+>. I would expect person A to be heavier than person B if person A's knee diameter sum is 1 cm longer than person B's knee diameter sum because the y-intercept for the model (a weight with a knee diameter of 0) is negative (-73.559). So, I can assume that as knee diameter increases, the y-intercept (weight) will increase  (become less negative) as well. So, person A will be 7.586 kilograms heavier in comparison to person B
+
+## (Bonus) Part b: Model 2
+
+
+
+
+We would like model a person's weight with
+
+$$
+Weight = \beta_0 + \beta_{1_{male}}  1_{male} + \beta_{Knee Diameter} Knee Diameter + Error
+$$
+
+```{r}
+lm(wgt~sex + kne_di, body.dims)
+```
+
+### Part (i) (13 pts)
+
+(Complete the following.) According to our fitted model, for a female patient we will use the following formula to predict her weight in kg: 
+
+$$
+\widehat{Weight} = -43.320 + 5.742(Knee Diameter) + Error
+$$
+
+
+
+and for a male patient we will use the following formula:
+
+$$
+\widehat{Weight} = -43.320 + 9.131(1) + 5.742(Knee Diameter) + Error
+$$
+
+
+
+
+### Part (ii) (10 pts)
+
+Interpret the meaning for the coefficient estimate $\hat{\beta}_{1_{male}}$. No code is required for this part.
+
+>. The coefficient estimate $\hat{\beta}_{1_{male}}$ means sex is a categorical coefficient that requires a dummy variable to represent each distinct category (in this case male and female) in the linear model. The linear model requires numerical values to compute the slope and y-intercept. Thus, categorical variables are converted to numerics through dummy variables that use binary to quantify whether an observation belongs to a specific category which shifts the line based on which category we're fitting to. All in all, adding a categorical variable to the model results in including dummy variable(s) in the mathematical model. The practical result is that we now have two lines for predicting Weight, one for males and one for females; each group can now have a line with different y-intercepts. 
+
+
+## Part c: Model 3
+
+
+We model a person's weight with
+
+
+$$
+Weight = \beta_0 + \beta_{1_{male}}  1_{male} + \beta_{Knee Diameter}  Knee Diameter + \beta_{(Knee Diameter\ 1_{male})}  (Knee Diameter\ 1_{male}) + Error
+$$
+
+```{r}
+lm(wgt~sex*kne_di, body.dims)
+```
+
+### Part (i) (15 pts)
+
+(Complete the following.) According to our fitted model, for a female patient we will use the following formula to predict her weight in kg: 
+
+$$
+\widehat{Weight} = -53.479 + 6.304(Knee Diameter) + Error
+$$
+
+
+
+and for a male patient we will use the following formula:
+
+$$
+\widehat{Weight} = -53.479 + 33.474(1) + (6.304 - 1.286)(Knee Diameter)(1) + Error
+$$
+
+
+### Part (ii) (8 pts)
+
+According to our fitted model, on average one centimeter increment in the knee diameter sum will result in a bigger estimated weight increment for a male or a female patient?  Use numbers to support your answer. No code is required for this part.
+
+>. Coefficients quantify the expected change in the target for a one-unit increase in a continuous predictor, holding the other predictors constant. According to our fitted model, on average, one centimeter increment in the knee diameter sum will result in a bigger estimated weight increment for a female patient because, for example:
+
+>. -53.479 + 6.304(2) = -40.871 (female estimated weight increment)
+
+>. -53.479 + 33.474 + (6.304 + -1.286)(2) = -9.969 (male estimated weight increment)
+
+>. Also, based on the scatter plot from Q1, female's have a larger correlation coefficient for weight and knee diametr than males which means knee diameter has a larger impact for females than males.
+
+### Part (iii) (10 pts)
+
+(Fill in the blanks.) For Part (i) the prediction line for males have slope (6.304 - 1.286) = 5.018 and y-intercept -53.479 + 33.474 = 20.005.  The sign of the slope is consistent with what we see on the matrix plot.
+
+
+
+### Part (iv) (15 pts)
+
+Create a function `predict.weight(dat, gender, knee.diameter)` for Clair to use.  `predict.weight` should take a dataset `dat` that is like the `body.dims` dataset, and then fit a linear model to predict the weight (in kilograms) of a given patient based on the patient's the gender and the sum of the knee diameter (in centimeters).
+
+With your function, please predict the weight of a female patient whose knee diameter (measured as the sum of two knees) is 18.5 cm; i.e., provide the output of `predict.weight(dat = body.dims, gender = "female", knee.diameter = 18.5)`.  In addition, please predict the weight of a male patient whose knee diameter is 20.4 cm.  Report the predicted values in the write-up part of your report.
+
+Remember not to hard code in any values in your code.  You can assume that Clair will input in either "female" or "male" for the variable `gender`.  The use of any built-in functions in R (such as the `predict()` function) that make predictions with a fitted linear model are not permitted.
+
+
+```{r}
+predict.weight <- function(dat, gender, knee.diameter) {
+  model <- lm(wgt ~ sex * kne_di, dat)
+  
+  coefs <- model$coefficients
+  
+  gender.dummy <- gender == "male"
+  prediction <- coefs[1] + coefs[2]*gender.dummy + coefs[3]*knee.diameter +
+    coefs[4]*knee.diameter*gender.dummy
+  return(prediction)
+}
+
+predict.weight(dat = body.dims, gender = "female", knee.diameter = 18.5)
+predict.weight(dat = body.dims, gender = "male", knee.diameter = 20.4)
+```
+
+>. The female prediction weight for a knee diameter of 18.5 is approximately 63.14 and the male prediction weight for a knee diameter of 20.4 is approximately 82.35.
+
+# Question 3 
+
+## Part a (5 pts)
+
+```{r echo = F, eval = F}
+library(ggplot2)
+ggplot(body.dims) + 
+    geom_histogram(mapping = aes(x = age, y = ..density..),
+                   color = 'white', fill = 'steelblue', 
+                   binwidth = 1) +
+    labs(title = 'Histogram for ages of 507 residents',
+         x = "Age (in years)", y = "Proportion per year")
+```
+
+In lecture notes Ch 5.2, we say that a Normal distribution with mean $\mu$ and sd $\sigma$ has the following properties:
+
+* the distribution has a bell shape;
+* the distribution is symmetric around the mean;
+* 68%-95%-99.7% rule: about 68% of the data falls within 1 sd of the mean, about 95% of the data falls within 2 sd's of the mean, and 99.7% of the data falls 3 sd's of the mean.
+
+
+Base on the histogram above, does the distribution of the `age` variable look approximately Normal? Answer "yes" or "no" and explain in one sentence. No code is required for this part.
+
+>. No, the distribution of the age variable does not look approximately Normal because the distribution clearly doesn't have a bell shape (the data points are more skewed right with a long right tail) and the distribution isn't symmetric about the mean.
+
+## Part b (12 pts)
+
+* Use set.seed(5791) and draw 50,000 random samples, each of size 30, with replacement from the values in the `age` variable.  
+* Calculate the mean for each sample.
+* Make a histogram for the 50,000 sample means. 
+
+The **Central Limit Theorem** (CLT) says that if we repeatedly draw many many independent random samples of size $n$ from a **population** with **mean $\mu$ and SD $\sigma$**, regardless of the shape of the population distribution, **as the sample size $n$ gets larger and larger**, the **distribution of the *sample means* gets closer and closer to the Normal(mean=$\mu$, SD = $\frac{\sigma}{\sqrt{n}}$) distribution**.
+
+Verify the C.L.T by calculating and comparing the mean and the sd of the sample means with the mean and the sd of the `age` variable. According to the C.L.T, what is the relationship between the two sd's? Support your answer with numbers.
+
+```{r}
+sample_once <- function(iter_no, pop, sample_size) {
+  mean(sample(pop, size = sample_size, replace = T))
+}
+
+repeat_sample <- function(pop_data, tot_iteration, s_size) {
+  samples <- map_dbl(1:tot_iteration, sample_once, pop = pop_data, sample_size = s_size)
+
+  df <- tibble(samples)
+  
+  ggplot(df) + 
+  geom_histogram(mapping = aes(x = samples, y = after_stat(density)), 
+                 binwidth = 0.5, color = 'white') +
+    #xlim(200, 500) +
+   labs(title = 'Distribution of sample means',
+       x = 'Sample mean', y = 'Density')
+}
+
+set.seed(5791)
+repeat_sample(body.dims$age, 50000, 30)
+
+sample.means <- map_dbl(1:50000, sample_once, pop = body.dims$age, sample_size = 30)
+mean(sample.means)
+#30.16482
+sd(sample.means)
+#1.761001
+
+mean(body.dims$age)
+#30.18146
+sd(body.dims$age) / sqrt(30)
+#1.754259
+```
+
+>. The mean of the sample means and the mean of the variable age are of the same magnitude (value of ~30). Similarly, the sd of the sample means and the sd of the variable age divided by the square root of the sample size are of the same magnitude (value of ~1.7). According to the CLT, as sample size increases, the distribution of the sample means gets closer and closer to the Normal. The sd of the sample means will be approximately the same as the sd for the Normal which is represented by the SE of the age variable.
+
+
+# (Bonus) Question 4
+
+## Part a (10 pts)
+
+Please fit the model below by using the `iris` dataset.
+
+$$
+Sepal.Length = \beta_0 + Error 
+$$
+$$
+Sepal.Length = 5.843 + Error 
+$$
+
+Report the estimate on $\beta_0$.  Based on the fitted model what can we conclude about the `mean(Sepal.Length)`?  Explain. Verify your claim by calculating `mean(Sepal.Length)` and comparing it with $\hat{\beta_0}$.
+
+```{r}
+lm(Sepal.Length~1, iris)
+#5.843
+mean(iris$Sepal.Length)
+#5.84333
+```
+
+>. The estimate for the y-intercept, or beta_0, in the model is 5.843. We can conclude that the mean of Sepal.Length and the y-intercept in the model will be about the same value. Coefficients quantify the expected change in the target for a one-unit increase in a continuous predictor, holding the other predictors constant. However, in this instance, the coefficient beta_0 represents an estimate of Sepal.Length for all species within iris, disregarding any specific distinctions between the species and length. The coefficient is the predicted or observed value for the Sepal.Length. The position and estimate of the line created by the model minimizes the distance between the predicted y and each point (MSE). Thus, with only beta_0 present in this formula, the mean of Sepal.Length will minimize the MSE which is why beta_0 and mean(Sepal.Length) are the same.
+
+## Part b (20 pts)
+
+Please fit the model below by using the `iris` dataset.
+
+
+
+$$
+Sepal.Length = \beta_0 + \beta_{versicolor}1_{versicolor} + \beta_{virginica}1_{virginica} + Error 
+$$
+
+
+Report the coefficient estimates:  
+$$\widehat{\beta}_0 = 5.006$$   
+$$\widehat{\beta}_{versicolor} = 0.930$$
+$$\widehat{\beta}_{virginica} = 1.582.$$    
+
+Explain how we can use the coefficient estimates to calculate the mean of the Sepal Length within each of the species categories for the iris dataset?  Verify your claim by calculating the mean of the Sepal Length within each of the species categories and comparing the numbers to the ones you calculated with the the coefficient estimates only.
+
+
+```{r}
+lm(Sepal.Length~Species, iris)
+
+iris |>
+  select(Sepal.Length, Species) |>
+  group_by(Species) |>
+  summarise(mean(Sepal.Length))
+
+```
+
+>. If you add the y-intercept (beta_0) to the coefficient estimates for each species, you can calculate the mean of the Sepal Length within each of the species categories by adding the coefficients since the y-intercepte serves as the predicted value of the data and 4a) demonstrates why this is the case and how it relates to mean(Sepal.Length):
+
+>. versicolor: 5.006 + 0.93 = 5.94
+
+>. virginica: 5.006 + 1.582 = 6.59 
+
+>. setosa: setosa = beta_0 = 5.006.
+
+>. The y-intercept provides a general benchmark or baseline for the Sepal Length of all species of iris, then the coefficient estimates provide the true difference/distinction between each species sepal length-wise, hence the calculated mean. Thus, mean(Setosa_Sepal.Length) = beta_0,  mean(versicolor_Sepal.Length) = beta_0 + beta_versicolor, and mean(virginica_Sepal.Length) = beta_0 + beta_virginica. The coefficients for the groups versicolor and virginica represent the contrast (relative to the baseline group setosa) of effects on Sepal.Length.
+
+## Part c (15 pts)
+
+For each species category, calculate the proportion of the iris flowers that have sepal length measurements that are at least twice as big as their sepal width measurements. You are not allowed to use the `filter()` or the `sum()` function for this part. 
+
+```{r}
+iris |>
+  select(Sepal.Length, Species, Sepal.Width) |>
+  group_by(Species) |>
+  summarise(prop = mean(Sepal.Length >= 2 * Sepal.Width))
+```
+
+
+# (Bonus) Question 5
+
+## Part a (13 pts: 2 + 2 + 6 + 3 (first two blanks, third blank, explanation).)
+
+The picture below shows the data frame `travel`. It contains the data for some flights that departed from the given airports.  Below are the descriptions of the columns.
+
+* **month**  Month of departure.
+* **day** Date of departure.
+* **dep_time** Actual departure time, UTC.
+* **dep_delay** Departure delays, in minutes. Negative times represent early departures.
+* **arr_time** Actual arrival time, UTC.
+* **arr_delay** Arrival delays, in minutes. Negative times represent early arrivals.
+* **carrier**  Two letter carrier abbreviation. AA: American Airlines; DL: Delta Airlines; UA: United Airlines; WN: Southwest Airlines.
+* **origin**  Origin and destination airport
+
+```{r fig.width=9, fig.height=7,echo=FALSE,out.height = '25%', out.width = '70%'}
+#Make sure you have these libraries installed.
+#This displays an image of the figure
+library(png)
+library(grid)
+img <- readPNG("/Users/brittneybarnwell/Downloads/Pset2/question5a.png")
+grid.raster(img)
+```
+
+
+```{r eval = F}
+q5a = travel |> 
+        count(month, carrier, origin)
+```
+
+
+(Fill in the blanks) According the code above, the data frame `q5a` has 4 (fill in a number) columns and 8 (fill in a number) rows. The column names of `q5a` are month, carrier, origin, and n().**
+
+**Explain** how you figure out the number of rows.
+
+>. count() lets you quickly count the unique values of one or more variables. Based on the contents of the travel dataset, there are 5 distinct months, 4 distinct carriers, and 3 distinct origins, and there are 10 rows total from the original data. Thus, the number of rows in q5a will be 8 because there are 8 unique combinations of month, carrier, and origin without repeats/duplicates and the number of rows with count() must be less than the number of rows in the original dataset. So, since there are two rows in the original data set with a month of 6, a carrier of WN and an origin of LGA, and a carrier of DL and an origin of JFK, these will be omitted by count().
+
+## Part b (9 pts)
+
+
+Provide code to calculate the minimum, median, and maximum departure time for flights that have both early departures and early arrivals, and for the rest of the flights.
+
+Hint: You can first add a logical column `early` to the data frame `travel`. The value of `early` should be TRUE if the flight departed and arrived early, and FALSE otherwise.
+
+The output data frame is shown below for your reference.
+
+```{r fig.width=3, fig.height=4,echo=FALSE, out.height = '10%', out.width = '60%'}
+#Make sure you have these libraries installed.
+#This displays an image of the figure
+library(png)
+library(grid)
+img <- readPNG("/Users/brittneybarnwell/Downloads/Pset2/question5b.png")
+grid.raster(img)
+```
+
+ 
+
+```
+# Place your code here
+travel |>
+  select(dep_delay, arr_delay, dep_time) |>
+  summarise(early = (dep_delay < 0 && arr_delay < 0),
+  min_dep_time = min(dep_time),
+  med_dep_time = median(dep_time),
+  max_dep_time = max(dep_time))
+
+```
+
+

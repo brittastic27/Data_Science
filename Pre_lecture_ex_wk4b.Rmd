@@ -1,0 +1,100 @@
+---
+title: "Week 4b Pre-lecture exercises"
+author: 
+date: ""
+output:
+  pdf_document:
+    fig_caption: yes
+  html_document:
+    df_print: paged
+geometry: margin=1in
+fontsize: 10pt
+editor_options:
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.align="center", fig.height=4.5, fig.width=5, collapse=TRUE, comment="", prompt=FALSE, echo = TRUE, cache=TRUE, autodep=TRUE, tidy=TRUE, tidy.opts=list(width.cutoff=50))
+options(width=75)
+```
+
+
+Please watch the videos from the *Week4b* playlist under the *Panopto Video* tab on Canvas.  
+Remember that you can adjust the speed and the size of the videos too. Please knit the .rmd file and submit your solutions in a .pdf file on Canvas.
+
+
+
+1. We will first create two data frames for this exercise.  Please don't worry about the code for this part.
+
+```{r message=F, warning=F, include=F}
+library(dplyr)
+
+sw1 <- starwars[1:4, 1:11]
+sw2 <- starwars[9:13, 1:11]
+```
+
+Take a look at the data frames to get familiar with them.
+
+```{r}
+sw1
+sw2
+dim(sw1); dim(sw2)
+```
+
+Join the two data sets together by stacking `sw1` on top of `sw2`, i.e., combine the two data frames, and the number of rows in the resulting data frame should be the sum of the numbers of rows in `sw1` and `sw2`; the first `r nrow(sw1)` rows in the resulting data frames should be the rows from `sw1` and the last `r nrow(sw2)` rows should be from `sw2`.
+
+```{r question-one}
+sw1 |> nrow()
+tail(sw2)
+sw_combine = bind_rows(sw1, sw2)
+sw_combine
+sw_combine |> nrow()
+head(sw_combine)
+```
+
+If you include an additional argument `.id = "id"` in the function that you used to join the two data frames, the resulting data frame will have an extra column `id`.  Can you guess what the values in `id` mean?
+
+> **.id represents an optional identifier column that creates an output column that identifies each input and the column will use names if available, otherwise it will use positions <-- used ?bind_rows**
+ 
+2. We will first create two data frames for this exercise.  Please don't worry about the code for this part.
+```{r, include=F}
+authors <- data.frame(
+    ## I(*) : use character columns of names to get sensible sort order
+    surname = I(c("Tukey", "Venables", "Tierney", "Ripley", "McNeil")),
+    nationality = c("US", "Australia", "US", "UK", "Australia"),
+    deceased = c("yes", rep("no", 4)))
+books <- data.frame(
+    name = I(c("Tukey", "Venables", "Tierney",
+             "Ripley", "Ripley", "McNeil", "R Core")),
+    title = c("Exploratory Data Analysis",
+              "Modern Applied Statistics ...",
+              "LISP-STAT",
+              "Spatial Statistics", "Stochastic Simulation",
+              "Interactive Data Analysis",
+              "An Introduction to R"),
+    other.author = c(NA, "Ripley", NA, NA, NA, NA,
+                     "Venables & Smith"))
+```
+
+Take a look at the data frames that we have.
+
+```{r}
+authors
+books
+```
+
+(i) Create a data frame by keeping all the rows in `authors` and merging the rows in `books` to the rows in `authors`.  Does the author "R Core" show up on the merged data frame?
+
+```{r question-2i}
+inner_join(x = authors, y = books, by = c("surname" = "name"))
+```
+
+> **No, R Core does not show up on the merged data frame**
+
+(ii) Create a data frame by keeping all the rows in `authors` and `books` and merging the rows in the two data frames. Does the author "R Core" show up on the merged data frame?
+
+```{r question-2ii}
+full_join(x = authors, y = books, by = c("surname" = "name"))
+```
+
+> **Yes, R Core does show up on the merged data frame**

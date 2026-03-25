@@ -1,0 +1,368 @@
+---
+title: "Precept 9 Exercise"
+author: "Your Name"
+date: ""
+output:
+  pdf_document:
+    fig_caption: yes
+    toc: no
+  html_document:
+    df_print: paged
+    toc: no
+geometry: margin=1.5in
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.align="center", fig.height=5.5, fig.width=6, collapse=TRUE, comment="", prompt=FALSE, echo = TRUE, cache=F, autodep=TRUE, tidy=TRUE, tidy.opts=list(width.cutoff=60))
+options(width=63)
+```
+
+# Objectives:
+
+* One-way ANOVA
+* One sample and two sample t-tests
+* Understand regression outputs
+
+
+
+# One-sample and two-sample t-tests
+
+## The goals of the t-tests:  
+
+i.) One-sample t-test: Test if the population mean equals certain number;  
+ii.) Two-sample t-tests: Test if the difference of **two** population means equals certain number for two **independent** populations;   
+iii.) Two-sample paired t-tests: Test if the difference of **two** population means equals certain number (the data in the two samples are **paired** and so are the two populations ).  In this case, we can also transform the data and look at the difference of the paired data points; then, we can do a one sample t-test on the difference and the result will be the same as doing a two-sample paired t-test.
+
+## The assumptions of t-tests:
+
+i.) One-sample t-test: The sample is a Simple Random Sample (SRS) and data points are drawn from the same distribution and were collected *independently*;  
+ii.) Two-sample t-tests: The samples are SRS's.  The two **samples** are assumed to be **independent** and **so are** the two **populations**;   
+iii.) Two-sample paired t-tests: The samples are SRS's.  The data in the two samples are **paired** and so are the two populations. 
+    
+# One-way ANOVA
+
+One-way ANOVA is used to test if the means of **multiple** independent populations are equal. 
+
+
+## Assumptions for ANOVA
+
+* All populations are normal.
+* All populations have the same
+variance.
+* The samples and populations are
+independent.
+* Under the null we also assume that all populations have the same mean.
+
+
+# Exercise 1
+
+The two vectors below contain the measurements on the lengths of odontoblasts (cells responsible for tooth growth) in 60 guinea pigs. Each animal received one of three dose levels of vitamin C (0.5, 1, and 2 mg/day) by one of two delivery methods, (orange juice or ascorbic acid, a form of vitamin C and coded as VC). We want to compare if there is a significant difference in the expected tooth growth between the two different delivery methods. Test this at the significance level $\alpha = 0.05$
+
+
+```{r}
+delivery.method1 = ToothGrowth[ToothGrowth$supp=='OJ','len' ]
+delivery.method2 = ToothGrowth[ToothGrowth$supp=='VC','len' ]
+```
+
+## part a
+
+State the null and the alternative hypotheses. 
+
+$H_0$: The orange juice had no significant difference in the expected tooth growth between the two delivery methods
+
+$H_1$: The orange juice had a significant difference in the expected tooth growth between the two delivery methods
+
+## part b  
+
+What test would you use? 
+
+>. Two-sample t-tests
+
+## Part c
+
+Calculate the p-value and the standardized test statistic. State your conclusion about the test.
+
+```{r question-1c}
+results <- t.test(delivery.method1, delivery.method2,
+       alternative = c("two.sided"),
+       paired = F,
+       mu = 0)
+results$stat
+# Standardized test statistic: 1.915268
+results$p.value
+# p-value: 0.06063451
+
+```
+
+>. The standardized test statistic is about 1.915268 and the p-value is 0.06063451 (~6.06%). According to the result of the test above, I will not reject the null hypothesis because the p-value is greater than the significance level of 5% (alpha = 0.05) which means there is not enough evidence to reject the claim made.
+
+# Exercise 2
+
+The dataset `cabbages` from the {MASS} package records the numbers on two different cultivars (c39 and c52) of cabbage that were growing in the farm. The farm is interested to see if there is any difference between two cultivars in terms of the cabbage head weights. In particular, since the sample mean for c39 is heavier, does this provide enough evidence against the claim that c39 has a head weight no more than c52 on average? Test this at the 5% significance level.
+
+```{r message = F}
+library(dplyr)
+library("MASS")
+
+table(cabbages$Cult) # 30 cabbages in each sample
+
+cabbage.c39 = cabbages %>% filter(Cult=='c39') %>% pull(HeadWt)
+cabbage.c52 = cabbages %>% filter(Cult=='c52') %>% pull(HeadWt)
+
+```
+
+## part a
+
+State the null and the alternative hypotheses.  
+
+$H_0$: c39 has a head weight less than c52 on average
+
+$H_1$: c39 has a head weight no more than c52 on average
+
+## part b  
+
+What test would you use?  
+
+>. One-sample t-tests
+
+## part c
+
+Calculate the standardized test statistic and the p-value. State if you are going to reject the Null hypothesis.  Interpret the p-value and explain how you arrived at your decision.
+
+```{r question-2c}
+results <- t.test(cabbage.c39, cabbage.c52,
+       alternative = c("less"),
+       paired = F,
+       mu = 0)
+results$stat
+# Standardized test statistic: 2.920875
+results$p.value
+# p-value: 0.004971691
+```
+
+>. The standardized test statistic is about 2.920875 and the p-value is 0.9975142 (99.75%). According to the result of the test above, I will not reject the null hypothesis because the p-value is greater than the significance level of 5% (alpha = 0.05) which means there is not enough evidence to reject the claim made.
+
+
+# Exercise 3
+
+
+The 'sleep' dataset (a built-in dataset in R) shows the effect of two soporific drugs (in terms of the increment in hours of sleep compared to control) on 10 patients. 
+
+
+## Part a
+
+Assume the two populations are Normal. (Note that if a **population is exactly Normal** and we use the sample SD to estimate the population SD as the usual, then the standardized sample mean variable (for the samples drawn from the population) follows the t-distribution with df = sample size -1; this is true even when the sample size is small-it could be as small as 2.)  Construct a 95% CI to estimate the difference in the mean effects of the two drugs: average effect of drug 1 - average effect of drug 2.
+
+```{r}
+drug1 <- sleep |>
+  filter(group == 1) |>
+  pull(extra)
+
+
+drug2 <- sleep |>
+  filter(group == 2) |>
+  pull(extra)
+  
+drug.diff <- drug1 - drug2
+c(mean(drug.diff) - qt(p = .975, df = 9)*sd(drug.diff)/sqrt(10),
+  mean(drug.diff) + qt(p = .975, df = 9)*sd(drug.diff)/sqrt(10))
+```
+
+
+## Part b
+
+
+Set up the Null and Alternative hypotheses to test whether the drugs have different effects. 
+
+$H_0$: the drugs have the same effect
+
+$H_1$: the drugs have different effects
+
+## Part c
+
+Test the $H_0$ hypothesis at the $\alpha = 0.05$ significance level.  Which test should we use? What is the conclusion of the test?
+
+
+```{r}
+results <- t.test(drug1, drug2,
+       alternative = c("two.sided"),
+       paired = T,
+       mu = 0)
+results$stat
+# Standardized test statistic: -4.062128
+results$p.value
+# p-value: 0.00283289
+```
+
+
+>. We should use a t-test. Based on the test, the standardized test statistic is about -4.062128 and the p-value is about 0.00283289 (~0.283%). According to the result of the test above, I will reject the null hypothesis because the p-value is less than the significance level of 5% (alpha = 0.05) which means there is enough evidence to reject the claim made.
+
+# Exercise 4 
+
+
+Recall that R's built-in dataset `ChickWeight` records the data from an experiment on the effect of diet on early growth of chicks.
+
+### Part a
+
+Make a side-by-side boxplot to compare the distributions of the chick weights across different diets.  You can use the following labels.
+
+
+```{r eval = F}
+ggplot(ChickWeight, mapping = aes(x = Diet, y = weight, color = Diet)) +
+  geom_boxplot() +
+  labs( x="Diet Type",
+       y="Weights of the chicks (gm)",
+       title = "Weights of the chicks on different diets")
+```
+
+
+ 
+## Part b
+
+Check the normality for each sample to make sure that the Normality assumption for the populations was not violated.  To do this, we just need to make sure that the sample distributions are not too skewed, so for each sample we just need to look at the histogram and the density curve for the sample,  and compare them with the density curve for the relevant Normal distribution
+
+```{r}
+ggplot(ChickWeight, mapping = aes(x = weight, fill = Diet)) + 
+  geom_histogram(mapping = aes(y = after_stat(density)),
+                 position = "identity",
+                 bins = 30,
+                 color = "white",
+                 alpha = .4) +
+  geom_density(aes(color = "Sample data"),
+               linewidth = 1.2,
+               alpha = 0) +
+  stat_function(fun = dnorm, 
+                args = list(mean = mean(ChickWeight$weight), sd = sd(ChickWeight$weight)), 
+                mapping = aes(color = "Normal distribution"), 
+                linewidth = 1.2) +
+  scale_colour_manual(name = "Density Curve", values = c("Normal distribution" ="pink","Sample data" = "yellow"))
+```
+
+
+
+## Part c
+
+Check the assumptions for ANOVA by using your results for Parts a and b.
+
+>. The graph is part b shows that the Diets don't follow a normal distribution (based on their density curves) and they're all right skewed. Thus, this supports the ANOVA assumption because we will need to take the natural log of the chicken weights in order for the data to be closer to Normal.
+
+## Part d
+
+
+Take the natural log of the chicken weights, and graph the side-by-side boxplot again to compare the distributions of the natural log of the chick weights across different diets.  Explain why the natural log of the data is more appropriate for the ANOVA test.
+
+```{r eval = F}
+ggplot(ChickWeight, mapping = aes(x = Diet, y = log(weight), color = Diet)) +
+  geom_boxplot() +
+  labs( x="Diet Type",
+       y="Natural log of weights of the chicks (gm)",
+       title = "Natural log of weights of the chicks on different diets")
+```
+
+>. The natural log of the data is more appropriate for the ANOVA test because the assumption of anova is that the data is Normally distributed so taking the natural log creates a transformation that centers the data closely to Normal.
+
+## Part e
+
+Test the following hypotheses:  
+
+$H_0$: Diet has no effect on the log of chicken weights;  
+$H_1$: Diet has effect on the log of chicken weights.
+
+
+at the 1\% significance level.
+
+```{r}
+my.anova = aov(log(ChickWeight$weight)~ChickWeight$Diet)
+summary(my.anova)
+```
+
+
+>. According to the result of the ANOVA test above, I will reject the null hypothesis because the p-value is less than the significance level of 1% (alpha = 0.01) which means there is enough evidence to reject the claim made. The p-value is at a magnitude of *** which is smaller than the magnitude of the significance level.
+
+# Exercise 5
+
+For a linear regression model if the errors are Normally distributed, it can be proved that the distribution of each of the $\hat{\beta}$'s is also Normal (remember that the estimates of the coefficients are random variables) assuming that the sample size is large.  Thus, we can test individually whether $\beta_k = 0$.
+
+Here is an example,
+
+```{r}
+mod = lm(data=iris, Petal.Width ~ Species + Petal.Length)
+
+summary(mod)
+```
+
+This means that `R` tested the following hypothesis and calculated the p-value for the hypothesis and p-values as the following:
+
+* $H_0$: $\beta_0 = 0$;  $H_1:\beta_0 \neq 0$; p-value = 0.109 
+* $H_0$: $\beta_{versicolor}$ = 0;  $H_1$: $\beta_{versicolor} \neq 0$; p-value = 4.04e-05 
+* $H_0$: $\beta_{virginica}$ = 0;  $H_1$: $\beta_{virginica} \neq 0$; p-value = 4.71e-08 
+* $H_0$: $\beta_{Petal.Length}$  = 0;  $H_1: \beta_{Petal.Length} \neq 0$; p-value = 4.41e-10 
+
+Note that the `*'s` after the p-values tells you how significant your test results are.  E.g., `***` means that your p-value is between 0 and 0.001, and `**` means that your  p-value is between 0.001 and 0.01.  The asterisks make it easy for people to spot the coefficient estimates with small p-values.  
+
+A small p-value means that given the truth that the coefficient is zero it would be unlikely that you would observe a sample that gives you a coefficient estimate that is as far from zero as the one that you have.  E.g., given that the true model actually has no `Petal.Length` (i.e., $\beta_{Petal.Length} = 0$), the chance that we would get a coefficient estimate $\hat{\beta_{Petal.Length}} = 0.2304$ is almost zero (4.41e-10).
+
+Therefore, small p-value means strong evidence against the claim that the term associated with the coefficient should not be in the model.  To put this formally, the test for $H_0$: $\beta_{Petal.Length}$  = 0;  $H_1: \beta_{Petal.Length} \neq 0$ has a p-value = 4.41e-10.  This is strong evidence against the claim that the variable `Petal.Length` should be excluded from the model.  Thus, we will want to include `Petal.Length` in our model.
+
+## Part a
+
+For a linear regression model if the errors are independent and follow a Normal(0, sd = $\sigma$) distribution with constant $\sigma$, then, the distribution of each of the $\hat{\beta}$'s is also Normal.
+
+
+Recall that the **Residuals** of a model is defined as 
+
+
+>*observed y-value - fitted y-value* = $y_i - \hat{y_i}$
+
+Because the errors in a model are not observable, people often study the behavior of the residuals instead in order to get an idea on whether it is reasonable to assume that the errors are Normal.
+
+
+Make the histogram and the qq-plot of the residuals for the model above.  Does it seem reasonable to assume that the errors are Normal? (Note that we are mainly looking for skewness; it is actually quite reasonable to assume that the errors are Normal based on the graphs that you are going to produce).
+
+```{r}
+ggplot(iris, mapping = aes(x = mod$residuals)) + 
+  geom_histogram(mapping = aes(y = after_stat(density)),
+                 fill = "steelblue",
+                 position = "identity",
+                 bins = 30,
+                 color = "white") +
+  geom_density(aes(color = "Sample data"),
+               linewidth = 1.2) +
+  stat_function(fun = dnorm, 
+                args = list(mean = mean(mod$residuals), sd = sd(mod$residuals)), 
+                mapping = aes(color = "Normal distribution"), 
+                linewidth = 1.2) +
+  scale_colour_manual(name = "Density Curve", values = c("Normal distribution" ="pink","Sample data" = "yellow"))
+
+ggplot(iris, mapping = aes(sample = mod$residuals)) +
+  stat_qq() +
+  stat_qq_line(color = "red") +
+  labs(x = "Theoretical Quantiles",
+       y = "Sample Quantiles",
+       title = "Normal Q-Q Plot for Iris Dataset")
+```
+
+>. It doesn't really seem reasonable to assume that the errors are Normal since the plotted residuals in the histogram are skewed and don't follow a normal distribution bell curve. Meanwhile, in the qq-plot, there are many outliers to the line of best fit, even though they follow the same increasing trend as the rest of the points more closely concentrated to the line.
+
+
+## Part b
+
+Verify the p-value for the following test by doing the calculation yourself:
+
+$H_0: \beta_0 = 0$;   
+$H_1: \beta_0 \neq 0$
+
+Note that from the output above it says that the observed value for $\beta_0$ is $-0.09083$ and the $SE(\hat{\beta_0})$ is $0.05639$.  Now, calculate the standardized test-statistic and the p-value with these numbers.  Compare your answer with the number in the output.
+
+Answer: 
+
+```{r}
+summary(mod)$coef[1] / summary(mod)$coef[5]
+```
+
+
+>. Based on the test, the standardized test statistic is about -1.61087 which aligns with the output of summary(mod) and the p-value is close to 0 which also aligns with the output of summary(mod). According to the result of the test above, I will reject the null hypothesis because the p-value is very small which means there is enough evidence to reject the claim made.
+
+

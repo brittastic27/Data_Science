@@ -1,0 +1,704 @@
+---
+title: "SML 201 Project 3 Predicting House Sold Prices for Seattle and Greater Area"
+subtitle: 
+author: ''
+date: "`r Sys.Date()`"
+output:
+  pdf_document:
+    dev: png
+    fig_caption: yes
+    toc: yes
+    toc_depth: 3
+  html_document:
+    df_print: paged
+    toc: yes
+geometry: margin=1in
+fontsize: 10pt
+editor_options:
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.align="center", collapse=T, comment="", prompt=F, 
+                      echo = T, cache=F, autodep=T, tidy=F, dev='png', 
+                      dpi=300, out.height = '50%', out.width = '100%',
+                      tidy.opts=list(width.cutoff=63), dev='png')
+options(width=63)
+
+```
+
+
+**Project 3 is due by 7:00 p.m. EST on Tuesday, December 16,** and just a reminder that **no late pass is allowed** for Project 3, as the deadline is the final assessment deadline set by the university.   You must submit the project by the deadline.  Please submit **both a .pdf and a .rmd** files on Gradescope by the deadline.  
+
+**Please do not email your work to any of the instructors in any case** (unless you have no access to Gradescope at the time when the assignment is due--in this case please email the Head TA (see syllabus for contact info) both copies of your .pdf and .rmd files before the deadline and upload the unaltered copies of the files to Gradescope as soon as you regain access to Gradescope).  We need your files to be on Gradescope in order to grade them.  Thus, even if you are late, please still submit the files on Gradescope.
+
+
+This assignment can be completed in groups of up to 3 students. Feel free to use Ed Discussion to recruit team members.  It is okay to work by yourself, if this is preferred.   You are welcome to get help (you can either ask questions on Ed Discussion or talk to the instructors during office hours) from the instructors; however, please do not post code/solutions on Ed Discussion on a public post.  Please see the *Academic Integrity Policy* tab on Canvas about the course policy.
+
+For **problem sets and projects** you may not work with a given student on more than **two assignments**.  For example, if you work with student A on Problem set 1 and Project 1, then you cannot work with student A on any other problem sets and projects. 
+
+When working in a group it is your responsibility to make sure that you are satisfied with all parts of the report and the submission is on time (e.g., we will not entertain arguments that deficiencies are the responsibility of other group members).  We expect that you each work independently first and then compare your answers with each other once you all finish, or help each other if someone in your group gets stuck.  Failing to make contributions and then putting your name on a report will be considered a violation of the honor code.  **Please do not divide work among group mates.**  Everyone in your group is responsible for being able to explain the solutions in the report.
+
+
+For all parts of this project, you **MUST** use R commands to print the output as part of your R Markdown file. You are not permitted to find the answer in the R console and then copy and paste the answer into your report.  **All code and outputs should be visible on your pdf file.**
+
+**If you are completing this project in a group**, please have only **one** person in your group turn in the .Rmd and .pdf files.  Make sure that this person selects the names of all the group mates on Gradescope--if you are not sure about how to make a group submission please see the video posted under *Assignments > Precept submission instructions* on Canvas.  To receive full credit for this assignment, you must select the pages properly for each problem on Gradescope; again, if you are not sure about how to do this, please watch the video mentioned.
+
+Late problem sets and projects (i.e., being late even after you use a late pass) will be penalized at intervals rounded up to multiples of 24 hours. You will receive a 10% deduction on the score for each 24-hour-late-interval.  For example, if you are 3 hours late, 10% off or if you are 30 hours late, 20% off. A late pass is not allowed for assignments that are due on Dean's date.
+
+
+----
+
+Please type your name(s) after "Digitally signed:" below the honor pledge to serve as digital signature(s). 
+
+> I pledge my honor that I have not violated the honor code when completing this assignment.
+
+Digitally signed:
+
+----
+
+**When reporting numerical findings in the [narrative part]{.underline} of your report, please round answers to an appropriate number of digits.  This means that usually having 2 decimal places (e.g., 45.71) is good; however, if the answer has a lot of leading zeros (e.g., 0.000034), you might want to include at 2 or more non-zero digits. Just make sure that you do not report answers in long strings of numbers (e.g., 5.043289); this will make your report look unprofessional.**   When printing out a data frame as part of an answer, you can use `print.data.frame(your_df, digits = 2)`; this will allow you to print out the entire data frame `your_df` and suggest to `R` that you want to have *at least 2* significant digits--you might want to adjust the value for `digits` based on individual cases.  **Remember not to round intermediate calculations and please avoid hard-coding.**  For example, if we updated the dataset *loan_data.csv* with additional rows, your code should still work without any modifications. 
+
+----
+
+## Report quality
+
+Unless otherwise specified, please provide code and the output of the code to support all your answers.
+
+In general if your report contains plots, in order to receive full credits, please have sensible titles and axis labels for all your graphs and adjust values for all the relevant graphical parameters so that your plots are informative.  Also, all answers must be written in complete sentences.
+
+### (-3 pts each: code does not run; code does not have proper annotations; student did not select pages correctly for each question on Gradescope)  
+### (-2 pts each: answers are not in complete sentences; report includes an unnecessarily large chunk of a dataset.)
+
+
+
+
+## Before you start: for-loops are not allowed for this project. 
+
+
+-------
+
+
+# Objective of this project
+
+(Hypothetical)  Congrats!  You have been hired as an intern at Redfin (Redfin.com) in Seattle.  For your first project, your manager would like you to build a new model to predict house prices in the King County area of Washington State.  
+
+To view the predicted sold prices by Redfin's current model, refer to the number displayed in the  *Redfin Estimate for ...* section.  For instance, for this house  (https://www.redfin.com/NJ/Princeton/17-Aiken-Ave-08540/home/36691957), as of Nov. 29, 2025, the Redfin estimate is $1,129,552 compared to the asking price of $1.145 million.
+
+
+
+# Background info and the dataset
+
+For this project we will use a dataset^[This is a subset of a dataset from kaggle.com. We will use only a subset of the variables in the dataset because we only want to include variables that have clear definitions and seem relevant for house prices.] that contains transactional information for houses sold between May 2014 and May 2015 in King County of Washington, including Seattle.  
+
+The data for this project is stored in the file `house_data_cleaned.csv`, and the definitions for the variables in the dataset are listed below. 
+
+
+* **date**  The date the house was sold  
+* **price**  Sold price of the house  
+* **bedrooms**  Number of bedrooms in the house  
+* **bathrooms**  Number of bathrooms in the house  
+* **sqft_living**  Square footage of the house  
+* **sqft_lot**  Square footage of the lot  
+* **floors**  Total number of floors (levels) in house  
+* **waterfront**  Does the house have a view to a waterfront (0-No; 1-Yes)  
+* **condition**  How good the overall condition is   
+* **grade**  Overall grade given to the housing unit, based on King County grading system  (see table for `BLDGGRADE` on https://www5.kingcounty.gov/sdc/FGDCDocs/RESBLDG_EXTR_faq.htm)
+* **sqft_above**  Square footage of house apart from the basement   
+* **sqft_basement**  Square footage of the basement  
+* **yr_built**  Year when house was built  
+* **yr_renovated**  Year when house was renovated  
+* **zipcode**  Zip code of the house address  
+
+
+
+
+## Question 1 (4 pts: 2 for `renov_Y.N`, 2 for the rest)
+
+Read the dataset `house_data_cleaned.csv` into `R` and name it `house`. `house` should have 21605 rows and 15 columns.  
+
+
+Convert the following variables to categorical variables: `waterfront`, `floors`, `condition`, and `zipcode`.  (I have checked and there is not much linear relationship between the numeric version of `floors` and `price`, and between the numeric version of `condition` and `price`.  Therefore, it will be better to treat these variables as categorical variables.)
+
+Also, add an additional column `renov_Y.N` to `house`.  `renov_Y.N` should be a categorical variable.  An element in `renov_Y.N` is `Y` if the corresponding element in `yr_renovated` is greater than zero, and `N` otherwise.  The function dplyr::if_else() might be helpful here--you can check out its help manual--but you are not required to use it.
+
+
+Print the summary statistics for each column in the data frame `house` (i.e., the five-number summary and mean for numeric columns, and the frequency count for each level of categorical columns) after completing all the modifications above.  (Hint: This can be done in a single line of code.)
+
+**Answer**
+
+```{r question-1}
+library(dplyr)
+house = read.csv("/Users/brittneybarnwell/Downloads/house_data_cleaned.csv")
+
+house$waterfront = as.factor(house$waterfront)
+house$floors = as.factor(house$floors)
+house$condition = as.factor(house$condition)
+house$zipcode = as.factor(house$zipcode)
+
+house <- house |>
+  mutate(renov_Y.N = if_else(yr_renovated > 0, "Y", "N"))
+
+summary(house)
+
+head(house)
+```
+
+
+# Exploring the relationship between `price` and other variables.
+
+
+## Question 2 (30 pts)
+
+
+### Part a (7 pts: 3 for the answer; 4 for the graph)
+
+Is the distribution of the variable `price` symmetric or skewed?  If it is skewed, does it have a long left or right tail?  Please provide 1 graph to support your statement.
+
+**Answer**
+
+```{r question-2a}
+library(GGally)
+library(ggplot2)
+ggplot(house) +
+  geom_histogram(mapping= aes(x = price,
+                              y = after_stat(density)),
+                 binwidth = 200000,
+                 color = "white",
+                 fill = "steelblue")
+
+```
+
+>. The distribution of the variable price is right skewed with a long right tail
+
+### Part b (4 pts: 2 for the number; 1 for the dimensions; 1 for creating `majority`)
+
+To ensure the quality of our analysis, we will exclude houses that have extreme sold prices, i.e., houses with prices greater than or equal to $4,000,000 in our analysis.  How many houses will we exclude, out of 21605 houses?  
+
+Name the dataset with house prices less than $4,000,000 `majority`.  What is the dimensions of `majority`?
+
+Also, replace the values in the `price` column in `majority` with the natural logarithm of the prices.  The goal of doing the logarithmic transformation is to make the data fit the assumption of the model better when we build linear models later.
+
+**Answer**
+
+```{r question-2b}
+house |>
+  count(price >= 4000000)
+
+majority <- house |>
+  filter(price < 4000000)
+
+dim(majority)
+
+majority <- majority |>
+  mutate(price = log(price))
+
+head(majority)
+```
+
+>. We will exclude 12 houses out of 21605
+
+### Part c (19 pts: 12 for the plots; 3 for identifying the pair; 4 for explanation)
+
+
+Use `ggpairs()` in the `GGally` package to make matrix plots.  Investigate the pairwise relationships between the variables; give different colors to the data points depending on whether the house has a view to a waterfront.  Note that due to the large number of variables, you will need to use several matrix plots since one matrix plot will not fit all the variables.  Make sure all the relevant information that you want to display on the matrix plots is legible.
+
+
+Include `sqft_living`, `sqft_lot`, `sqft_above` and `sqft_basement` in the same plot to see if any of these variables are correlated.  Among these four variables, which pair has the largest correlation coefficient?  In linear modeling, is it good to include predictors that are highly correlated with one another (i.e., with correlations close to -1 or 1) in a model?  Explain why or why no.
+
+Since we have limited time for this project I have investigated the relationship between the month of sale and `price` and did not see any patterns; therefore, we will not include the variable `date` in our model or the matrix plots. 
+
+Also, note that including `zipcode` in a scatterplot matrix will not be helpful since the graph will be too small to show the relationship between `price` and `zipcode`; thus, we will investigate the relationship between `price` and `zipcode` separately later in the report.
+
+Hints:  If you are confused about this part, consider the following:
+
+* The matrix plots are intended to help prepare for the model building in the later part of the project. Think about which pairs of variables you would like to examine in order to explore their pairwise relationships for the potential linear models.
+
+* Based on the variable definitions, the variables that could potentially be strongly correlated should be placed in the same matrix plot.  Why?  There is more than one valid way to group the variables for the graphs, so be sure to explain the rationale for your choices in your report. Also note that some variables may appear in more than one matrix plot.
+
+
+
+**Answer**
+
+```{r question-2c}
+library(dplyr)
+house1 <- majority |>
+  select(waterfront, price, sqft_lot, sqft_living, sqft_above, sqft_basement)
+house2 <- majority |>
+  select(waterfront, price, bedrooms, bathrooms, floors)
+house3 <- majority |>
+  select(waterfront, price, condition, grade, yr_built, yr_renovated)
+
+ggpairs(house1,
+        aes(color = waterfront),
+        columns = 2:ncol(house1),
+        legend = c(1,1),
+        title = "Pairwise Relationships between House Variables") +
+  theme(legend.position = "bottom") +
+  scale_color_discrete(labels = c("No Waterfront", "Has Waterfront"))
+
+ggpairs(house2,
+        aes(color = waterfront),
+        columns = 2:ncol(house2),
+        legend = c(1,1),
+        title = "Pairwise Relationships between House Variables") +
+  theme(legend.position = "bottom") +
+  scale_color_discrete(labels = c("No Waterfront", "Has Waterfront"))
+
+ggpairs(house3,
+        aes(color = waterfront),
+        columns = 2:ncol(house3),
+        legend = c(1,1),
+        title = "Pairwise Relationships between House Variables") +
+  theme(legend.position = "bottom") +
+  scale_color_discrete(labels = c("No Waterfront", "Has Waterfront"))
+```
+
+>. sqft_above and sqft_living have the largest correlation coefficient at 0.875 among sqft_above, sqft_living, sqft_lot, and sqft_basement. In linear modeling, it is not good to include predictors that are highly correlated with one another because of multicollinearity: coefficients become unstable since small changes in the data can cause large swings in the estimated coefficients and it will make it difficult to interpret the individual effect of each predictor.The reason I chose to group the variables the way I did in their respective matrix plots is because, based on the definition of the variables, condition, grade, yr_renovated, and yr_built appeared to have a similar relationship with price which is also why I grouped bedrooms, bathrooms, and floors together. I inferred that these variables would affect price in a similar manner or would all work together to increase or decrease price accordingly. 
+
+## Question 3 (15 pts) Zipcode variable  
+
+### Part a (7 pts; 1 for the answer, 3 for the plot, 3 for the explanation) 
+
+Make side by side boxplots to compare the values in `price` by zip code.  Based on your boxplots, is it good to include the dummy variables for some of the zip codes in your model?  Explain.
+
+**Answer**
+
+```{r question-3a}
+ggplot(majority, mapping = aes(x = zipcode, y = price)) +
+  geom_boxplot() +
+  labs(x = "zipcode",
+       title = "Distribution of House Prices by Zip Code")
+```
+
+>. It's good to include the dummy variables for the zip codes in the model because the graph shows that there are large differences in price across the many zipcodes which supports the fact that the model requires complexity to effectively predict fitted values. Some predictions have outliers so, they have a different mean and median from the rest of the data which affects price variability across zipcodes and will help the model become more complicated and precise.
+
+
+### Part b (8 pts; 1 for each answer, 3 for each interpretation; no credit for correct answer with a wrong explanation) 
+
+Consider the following model (you will need to remove `eval=F` to run the code below):
+
+
+```{r}
+summary(lm(price~factor(zipcode), data = majority))
+```
+
+What is the estimate for the y-intercept of the model? Interpret the meaning of the y-intercept.  What is the coefficient estimate for the dummy variable for zip code 98004? interpret this number too.  It is okay to give your explanation in terms of the log(price) instead of the original price variable.
+
+**Answer**
+
+>. The estimate for the y-intercept of the model is 12.49312. This means that the log(price) of a house within zipcode 98001 is 12.49312 which is the baseline for the log(price) of the rest of the houses in other zipcodes to help build the model off of and estimate prices other zipcodes. The coefficient estimate for the dummy variable for zipcode 98004 is 1.50075 which represents the expected change in the response variable, log(price), for a one unit increase in the zipcode predictor.  
+
+
+# Divide data into non-test set and two test sets.
+
+
+For this part you just need to remove the `eval=F` argument for each of the code chunks below and run the code; no action is required from you other than that.  Please make sure that you understand how each part is created.
+
+`majority` covers the period from May 2014 to May 2015.  We will prepare a vector `date.format` that we can use to extract out the observations that correspond to transactions closed in May 2015.
+
+```{r}
+date.format = format(as.Date(majority$date, '%Y%m%dT'), "%Y%m")
+length(date.format)
+head(date.format)
+dim(majority)
+
+```
+
+
+
+Then, the following lines will extract out all the observations with transactions closed in May 2015. We will use these observations for our out-of-time test set `test2`.  
+
+```{r}
+
+test2 = majority |> 
+          filter(date.format %in% '201505') |> 
+          select(-date)
+
+dim(test2)
+```
+
+For the rest of the observations run the following code chunk; this will split the remaining observations into 2 sets: 85% of the data for the non-test set, and 15% of the data for the in-time test set (i.e., `test1`).
+
+```{r}
+library(rsample)
+# remove the `date` column from the data frame
+# keep the rows that are not correspond to the period May 2015
+tmp = majority |> 
+          filter(!date.format %in% '201505') |> 
+          select(-date)
+
+dim(tmp)
+
+set.seed(1746)
+data.split = initial_split(tmp, 
+                           prop=.85, strata='waterfront')
+
+non_test = training(data.split)
+test1 = testing(data.split)
+
+dim(non_test); dim(test1)
+
+# names(non_test); names(test1)
+```
+
+
+# Model building
+
+We are now ready to build our model!  `majority` has been divided into 3 sets: 
+
+* `non_test`: The 17805 by 15 non-test set;
+* `test1`: The 3143 by 15 in-time test set;
+* `test2`: The 645 by 15 out-of-time test set.
+
+
+## Question 4 (13 pts) 
+
+Here we will build an Ordinary Least Squares (OLS) regression model with all the variables available to us.  (Note that "an OLS regression model" is simply another name for the regular linear regression model.)
+
+### Part a (4 pts) 
+
+Build a OLS model with all the variables available to us.  Note that you might see that R returns `NA` for the coefficient estimate for `sqft_basement`.  This means that `sqft_basement` is highly correlated with one or more variables (other than `price`) in the dataset.  Therefore, you should explicitly exclude `sqft_basement` in your model.  Name the output of your fitted OLS model `ols`.  Please print all the coefficient estimates in your report.
+
+**Answer**
+
+```{r}
+ols <- lm(price ~ . -sqft_basement, data = house)
+
+ols$coefficients  
+```
+
+
+
+### Part b (5 pts) 
+
+What is the $\sqrt{MSE}$ when you predict with your OLS model on the non-test set?  What about on the in-time and the out-of-time test sets?  Calculate these quantities by using the definition of $\sqrt{MSE}$.  You are not allowed to use any functions that have not been covered in this course to do this part.
+
+**Answer**
+
+```{r}
+non_test.ols <- lm(price ~ . -sqft_basement, data = non_test)
+in_time.ols <- lm(price ~ . -sqft_basement, data = test1)
+out_of_time.ols <- lm(price ~ . -sqft_basement, data = test2)
+
+sqrt_MSE.non_test = sqrt(mean(non_test.ols$residuals^2))
+sqrt_MSE.in_time = sqrt(mean(in_time.ols$residuals^2))
+sqrt_MSE.out_of_time = sqrt(mean(out_of_time.ols$residuals^2))
+
+sqrt_MSE.non_test
+sqrt_MSE.in_time
+sqrt_MSE.out_of_time
+```
+
+
+>. RMSE of the non-test set is 0.1898689, of the in-time test set is 0.1891903, and the out-of-time test set is 0.1920244.
+
+### Part c (4 pts; 3 pts for the 1st question, 1 pt for the 2nd) 
+
+The code below (you will need to install the {broom} and {ggfortify} packages before running the code) creates the scatterplot for residuals v.s. fitted values, and the quantile-quantile plot for the residuals.  What do you expect to see if the distribution of the residuals is approximately Normal?   
+
+Also, explain what a fitted value is.  For example, for a particular house with log-house-price 12.5, what does the fitted value of the log-house-price of this house mean?
+
+
+```{r message = F, warning = F, eval = F}
+broom::tidy(ols)
+library(ggfortify) 
+autoplot(ols, which = c(1:2), size = .2)
+```
+
+
+**Answer**
+
+>. If the distribution of the residuals is approximately Normal, I'd expect to see the data points follow the upwards trend of the line of best fit on the Normal Q-Q plot with very few outliers and a tight concentration towards the line. A fitted value represents the predicted/estimated values of the model based on the training and test sets provided. In the example with a particular house with log-house-price 12.5, the fitted value of the log-house-price represents the model's predicted/estimated log-house-price based on the predictors and coefficients/betas. The model provides the best estimate of log(price) for a particular house. The predicted/estimated value could be off by a lot or a little from the expected value which is what the residuals measure/account for (residual = model error).
+
+
+
+## Question 5 (38 pts)
+
+Here we will build a linear model with the LASSO.
+
+### Part a (12 pts)
+
+Construct a LASSO regression model using all available variables, excluding `sqft_basement`.  Make sure that you 
+
+* expand all the categorical variables into multiple dummies, 
+* and standardize all the numeric variables. 
+* However, **do not** remove the predictors that have low variances as we did in lecture, since we want to keep some of the important variables, such as, `waterfront`.
+
+Use 10-fold cross validations and ask R to choose 200 possible $\lambda$ values to consider.  Repeat the 10-fold cross validation process 3 times.  When splitting the dataset for the 10-fold cross validation, please make sure that all folds have about the same proportion of houses that have a view to a water front.  Use $\sqrt{MSE}$ as the criterion for choosing the best $\lambda$.  The the selected $\lambda$ should be the one that corresponds to the simplest model whose  $\sqrt{MSE}$ is within one SE of the lowest $\sqrt{MSE}$.
+
+Show the plot for $\sqrt{MSE}$ v.s. $\lambda$ values.  Report the $\lambda$ value that you choose and the coefficient estimates of your champion model (it is fine to just print the coefficient estimates as outputs in a code chunk).  How many predictors does your champion model have?  (Predictors are the X-variables in the **mathematical form** of your model, so the y-intercept is not a predictor.)  Compare this number with that for the OLS model.
+
+Please make sure that you print the coefficient estimates only and not other uninformative quantities, such as the NA values. (Depending on how you code this part, you might not see the NAs at all.  Thus, not seeing any NAs is not an indication that something has gone wrong.)  Also, please use seed 1746 for all parts that involve a random process. 
+
+
+Hint:
+
+In lecture notes Ch 7.2, the output of `coef()` is a matrix.  Suppose `m` is a matrix.  Recall that `m[1, ]` extracts the first row of `m` and `m[ ,1]` extracts the first column.  You should check that each extracted column is a vector.  It might be helpful to inspect the values in the column vector after you extract the column of interest.
+
+**Answer**
+
+```{r question-5a}
+library(recipes)
+library(parsnip)
+library(yardstick)
+library(workflows)
+library(tune)
+rec1 = recipe(price ~ ., data = non_test) |>
+  step_rm(sqft_basement) |> # remove the `sqft_basement` column
+  step_dummy(all_nominal(), one_hot = T) |> # create dummies for all categories
+  step_normalize(all_numeric()) # standardize all numeric columns
+
+print.data.frame(
+  head(
+    bake(
+      prep(rec1),
+      new_data = non_test
+    )
+  )
+)
+
+
+head(non_test)
+
+lin_spec1 = linear_reg(penalty = tune(), mixture = 1) |>
+  set_engine("glmnet")
+lin_spec1
+
+# Establish metric/metrics
+loss_fn = metric_set(rmse) # possible choices are rmse and mae
+
+flow1 = workflow() |>
+  add_recipe(rec1) |>
+  add_model(lin_spec1)
+flow1
+
+set.seed(1746)
+k_folds = vfold_cv(data=non_test, v = 10, # k is the fold number
+strata = 'waterfront', repeats= 3)
+
+library(tictoc)
+tic()
+tune.result = tune_grid(
+    object = flow1, # the defined workflow
+    resamples=k_folds, # the output of vfold_cv(...)
+    grid=200,  # the number of possible lambda values to be considered
+    metrics=loss_fn, # the metric
+    control=control_grid(verbose=F) # logging results as they are generated
+)
+toc()
+
+tune.result$.metrics[[1]] # see the average rmse/mas values for each choice of lambda
+tune.result |> show_best(metric='rmse', n = 1)# returns the lambda 
+                                                 # values for the top n models in terms
+                                                 # of rmse
+tune.result |> collect_metrics() # reorganize the rows in an 
+                                  # decreasing order of the lambda values
+tune.result |> autoplot() +
+labs(x = "lambda values",
+title = "RMSE v.s. Lambda Values")
+
+# Finalize the lambda value for our champion model
+# Here, we pick lambda value that corresponds to the model that has the largest
+# lambda value among all the models that have RMSE average that are within
+# 1 SD of the lowest RMSE average
+lambda.champion = tune.result |> 
+                      select_by_one_std_err(metric='rmse', desc(penalty)) 
+lambda.champion
+
+# Obtain the champion model
+champion.flow = flow1 |> 
+    finalize_workflow(
+        parameters = lambda.champion 
+        
+    ) # finalize the lambda value for the model
+
+# fit the champion model on the entire non_test set
+champion.model = fit(champion.flow, data=non_test)
+
+# get the coefficient estimates for the champion model
+champion.model |> 
+    extract_fit_engine() |> 
+    coef(s = lambda.champion$penalty)
+
+```
+
+>. Every variable in non_test except price is treated as a predictor, hence price ~ . in the recipe.
+
+### Part b (7 pts: 4 for making data frame `plot.dat`, 2 for the graph, 1 for the value for `b`)
+
+
+We will consider additional variables to try to improve our model.
+
+Create a data frame, `plot.dat`, and use it to make the scatterplot for the **average** of log(price) v.s. the number of bedrooms for the houses in `majority`.  From the scatterplot we can see that for houses with `b` or more bedrooms, on average the more bedrooms a house has, the lower the sold price would be.  Provide the value of `b`.
+
+**Answer**
+
+```{r question-5b}
+plot.dat <- majority |>
+  select(price, bedrooms) |>
+  group_by(bedrooms) |>
+  summarise(avg_log_price = mean(price))
+  
+ggplot(plot.dat, mapping = aes(x = avg_log_price, y = bedrooms, color = factor(bedrooms))) +
+  geom_point() +
+  labs(title = " The Average of log(price) vs. Number of Bedrooms",
+       x = "Average log(price)",
+       y = "Number of bedrooms")
+
+```
+
+>. From the scatterplot we can see that for house with b = 11 or more bedrooms, on average the more bedrooms a house has, the lower the sold price would be. After b = 11, the sold price begins to decrease in comparison to b < 11 which have an increasing sold price as bedroom number increases.
+
+### Part c (6 pts)
+
+We will improve our model by creating an additional variable for our model to consider.
+
+For the non-test set, add an additional factor column that indicates if a house has 8 or more bedrooms and name this column `eight.plus`.  Also do this for each of the test sets.  
+
+**Answer**
+
+```{r question-5c}
+non_test <- non_test |>
+  mutate(eight.plus = as.factor(bedrooms >= 8))
+
+test1 <- test1 |>
+  mutate(eight.plus = as.factor(bedrooms >= 8))
+
+test2 <- test2 |>
+  mutate(eight.plus = as.factor(bedrooms >= 8))
+```
+
+
+
+### Part d (8 pts)
+
+Improve your recipe in Part a by including the interaction term for `bedrooms` and `eight.plus`, and the interaction term for `sqft_living` and `waterfront`.
+
+(Hint: The function to add interaction terms is `step_interact()`.  Please check out its help page.  In particular, see the example on the help page that deals with dummy variables and interaction terms.  Note that the order you put in the recipe steps matters.  You should see how each step in the recipe affects your dataset as we did in Week 10 PLE videos (see the video labeled "Video_10.02_Recipe") by running the `bake()` and `prep()` functions.)
+
+
+Refit your LASSO model with these additional terms.  Again, report the coefficient estimates of your champion model (it is fine to just print the coefficient estimates as outputs in a code chunk).
+
+**Answer**
+
+```{r question-5d}
+library(recipes)
+library(parsnip)
+library(yardstick)
+library(workflows)
+library(tune)
+
+rec1 = recipe(price ~ ., data = non_test) |>
+  step_rm(sqft_basement) |> # remove the `sqft_basement` column
+  step_dummy(all_nominal_predictors(), one_hot = T) |> # create dummies for all categories, now we have interaction terms
+  step_interact(terms = ~ bedrooms:starts_with("eight.plus") + sqft_living:starts_with("waterfront")) |> 
+  step_normalize(all_numeric_predictors()) # standardize all numeric columns, now we have interaction terms and predictors
+
+print.data.frame(
+  head(
+    bake(
+      prep(rec1),
+      new_data = non_test
+    )
+  )
+)
+
+head(non_test)
+
+lin_spec1 = linear_reg(penalty = tune(), mixture = 1) |>
+  set_engine("glmnet")
+lin_spec1
+
+# Establish metric/metrics
+loss_fn = metric_set(rmse) # possible choices are rmse and mae
+
+flow1 = workflow() |>
+  add_recipe(rec1) |>
+  add_model(lin_spec1)
+flow1
+
+set.seed(1746)
+k_folds = vfold_cv(data=non_test, v = 10, # k is the fold number
+strata = 'waterfront', repeats= 3)
+
+library(tictoc)
+tic()
+tune.result = tune_grid(
+    object = flow1, # the defined workflow
+    resamples=k_folds, # the output of vfold_cv(...)
+    grid=200,  # the number of possible lambda values to be considered
+    metrics=loss_fn, # the metric
+    control=control_grid(verbose=F) # logging results as they are generated
+)
+toc()
+
+tune.result$.metrics[[1]] # see the average rmse/mas values for each choice of lambda
+tune.result |> show_best(metric='rmse', n = 1)# returns the lambda 
+                                                 # values for the top n models in terms
+                                                 # of rmse
+tune.result |> collect_metrics() # reorganize the rows in an 
+                                  # decreasing order of the lambda values
+tune.result |> autoplot() +
+labs(x = "lambda values",
+title = "RMSE v.s. Lambda Values")
+
+# Finalize the lambda value for our champion model
+# Here, we pick lambda value that corresponds to the model that has the largest
+# lambda value among all the models that have RMSE average that are within
+# 1 SD of the lowest RMSE average
+lambda.champion = tune.result |> 
+                      select_by_one_std_err(metric='rmse', desc(penalty)) 
+lambda.champion
+
+# Obtain the champion model
+champion.flow = flow1 |> 
+    finalize_workflow(
+        parameters = lambda.champion 
+        
+    ) # finalize the lambda value for the model
+
+# fit the champion model on the entire non_test set
+champion.model = fit(champion.flow, data=non_test)
+
+# get the coefficient estimates for the champion model
+champion.model |> 
+    extract_fit_engine() |> 
+    coef(s = lambda.champion$penalty)
+
+```
+
+
+### Part e (5 pts)
+
+What is the $\sqrt{MSE}$ when you predict with your Champion model on the non-test set?  What about on the in-time and the out-of-time test sets?  
+
+Side note 1:  If the LASSO picks most of the variables, then it is not surprising that the error rate is not improved from the error rate for the OLS model.  
+
+Side note 2:  Additional improvement can be make by combining zipcodes that have similar average house prices into the same category; however, due to time constraint, we will not do that here.
+
+**Answer**
+
+```{r question-5e}
+pred.non_test <- predict(champion.model, new_data = non_test) |>
+  bind_cols(non_test) |>
+  mutate(residual = price - .pred)
+rmse.non_test <- sqrt(mean(pred.non_test$residual^2))
+rmse.non_test
+
+pred.in_time <- predict(champion.model, new_data = test1) |>
+  bind_cols(test1) |>
+  mutate(residual = price - .pred)
+rmse.in_time <- sqrt(mean(pred.in_time$residual^2))
+rmse.in_time
+
+pred.out_of_time <- predict(champion.model, new_data = test2) |>
+  bind_cols(test2) |>
+  mutate(residual = price - .pred)
+rmse.out_of_time <- sqrt(mean(pred.out_of_time$residual^2))
+rmse.out_of_time
+
+```
+
+>. RMSE on the non-test set: 0.1907118 RMSE on the in-time test set: 0.1938066 RMSE on the out-of-time test set: 0.2207558
+

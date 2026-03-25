@@ -1,0 +1,388 @@
+---
+title: "Precept 10 Exercise"
+author: "Your Name"
+date: ""
+output:
+  pdf_document:
+    fig_caption: yes
+    toc: no
+    number_sections: true
+  html_document:
+    df_print: paged
+    toc: no
+    number_sections: true
+geometry: margin=1.5in
+editor_options: 
+  chunk_output_type: console
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.align="center", fig.height=5.5, fig.width=6, collapse=TRUE, comment="", prompt=FALSE, echo = TRUE, cache=T, autodep=TRUE, tidy=FALSE, message = F, warning = F, tidy.opts=list(width.cutoff=60))
+options(width=63)
+```
+
+# Objectives
+
+* Being able to use multiple methods to assess the fitness of a model  
+* Understand how to do model selections
+
+
+
+# Key steps in model building procedure (with k-fold cross validation)
+
+Here we will list the main steps for building a linear model with the {tidymodels} package.
+
+
+
+## Randomly split the dataset for the analysis into non-test and test sets
+
+```{r include = F}
+library(tidymodels)
+```
+
+This is usually done with the `initial_split()` function.  
+
+```{r eval = F}
+data.split = initial_split(dataset_for_analysis, 
+                           prop=proportion_for_non_test_set, strata='column')
+
+non_test = training(...)
+test = testing(...)
+```
+
+However, if we also need to have in-time and out-of-time test sets, then we will need to add an extra step to extract out the out-of-time test set before doing the splitting. 
+
+The purpose of the non-test set is to build the champion model.  The purpose of the test set is to see how well the model would perform on a new dataset.
+
+## Searching for the "best" value for $\lambda$.
+
+Since $\lambda$ determines how complex our champion model will be, we will first find out the "best" value for $\lambda$.  "Best" is defined based on the metric we use.  Some common metrics are Mean Squared Errors (MSE), Root Mean Squared Errors ($\sqrt{MSE}$), and Mean Absolute Errors (MAE).  Note that MSE and $\sqrt{MSE}$ give exactly the same results.
+
+### Write out the recipe for processing the data
+
+Use the `recipe(formula = ..., data = ...)` function to list the steps for processing the data (i.e., feature engineering).  
+
+Some **example tasks** that are applicable to categorical variables are
+
+*  **removing unwanted columns**: `step_rm(variable_names)`;
+<!-- *  **missing value imputation**: `step_unknown(all_nominal(), new_level = ...)`; -->
+* **create dummy variables**: `step_dummy(all_nominal(), one_hot=TRUE)`
+<!-- *  **treating categories** that are **in** the **test set** but **not in** the **training set** to be one new category: `step_novel(all_nominal(), new_level='new_category_name')`; -->
+*  **bundle together infrequent levels (i.e., if a categories has less than the threshold fraction of the data, aggregate the categories into one new category)**: `step_other(all_nominal(), threshold=...)`.
+
+
+Some **example tasks** that are applicable to numeric variables are
+
+*  **removing unwanted columns**: `step_rm(variable_names)`;
+<!-- *  **fill in missing values with k-nearest-neighbors' value**: `step_knnimpute(all_numeric(), -Y_variable)`; -->
+*  **remove low-variance predictors**: `step_nzv(all_predictors())`.
+* **standardize the data for each predictor**:  `step_normalize(all_predictors())`
+
+**Note that the order in which we apply these steps matters!**
+
+### Establish model specifications and metric to use
+
+We then need to tell R what kind of model (e.g., ordinary Linear regression model, the LASSO, logistic regression model etc.) we are going to build. {glmnet} is a package that covers various models.
+
+`metric_set( )` tells R what criterion/criteria (i.e., metric/metrics) we are going to use to evaluate the performance of the candidate models.
+
+```{r eval = F}
+# Establish model specifications
+lin_spec = linear_reg(penalty = ...) |> 
+    set_engine('glmnet')
+
+# Establish metric/metrics
+loss_fn = metric_set(...) # possible choices are rmse and mae
+```
+
+
+
+### Define workflow 
+
+Put everything together.  We now tell R what the entire workflow should be.
+
+```{r eval = F}
+flow = workflow() |> 
+    add_recipe(...) |> 
+    add_model(...) # add model specification here
+```
+
+
+### Divide the non-test set into k-folds
+
+```{r eval = F}
+vfold_cv(data=non_test_set, v = k, # k is the fold number
+strata='var_for_stratification', repeats= number_of_repeats)
+```
+
+
+### Tuning for parameter $\lambda$ 
+
+Here we will calculate the metric values for various values of $\lambda$.
+
+```{r eval = F}
+library(tictoc)
+tic()
+tune.result = tune_grid(
+    object = ..., # the defined workflow
+    resamples=..., # the output of vfold_cv(...)
+    grid=...,  # the number of possible lambda values to be considered
+    metrics=..., # the metric
+    control=control_grid(verbose=TRUE) # logging results as they are generated
+)
+toc()
+```
+
+### Compare candidate models
+
+Here `we`tune.result |> autoplot()` plots the metric values v.s. lambda values on the log-scale.  The goal is to see how lambda affects the performance of the model.
+
+```{r eval = F}
+tune.result$.metrics[[1]] # see the rmse/mae values for each choice of lambda
+tune.result |> collect_metrics() # reorganize the rows in an 
+                                  # decreasing order of the lambda values
+tune.result |> show_best(metric='mae', n = ...) # returns the lambda 
+                                                 # values for the top n models 
+                                                 # in terms of mae
+tune.result |> show_best(metric='rmse', n = ...)# returns the lambda 
+                                                 # values for the top n models 
+                                                 # in terms of rmse
+tune.result |> autoplot() # plot the metric values for different lambda values
+                           # x-axis is on a log-scale
+```
+
+### Find $\lambda$ corresponding to the simplest model that gives almost the lowest error
+
+In the example code below, we assume that we will use the metric $\sqrt{MSE}$.  Here we find the $\lambda$ that corresponds to the least complex model whose estimated $\sqrt{MSE}$ is within one std error of the lowest estimated $\sqrt{MSE}$.  The candidate models are sorted from the one with the smallest
+number of predictors (i.e., the least complex model) to the one with the largest
+number of predictors (corresponding to the most complex model).
+
+```{r eval = F}
+# Finalize the lambda value for our champion model
+lambda.champion = tune.result |> 
+                      select_by_one_std_err(metric='rmse', desc(penalty)) 
+
+# The procedure for using the mae metric, instead of the rmse metric, is similar.
+```
+
+
+## Obtain the champion model
+
+Now, we know what $\lambda$ to use, we just need to fit the model for that particular $\lambda$.  Note that we are now using the entire non-test set to fit the model, since the more data we have the better estimates we can get for the $\beta$'s.
+
+```{r eval = F}
+
+# finalize the lambda value for the workflow for the champion model
+champion.flow = flow |> 
+    finalize_workflow(
+        parameters = lambda.champion 
+        
+    ) # finalize the lambda value for the model
+
+# fit the champion model on the entire non_test set
+champion.model = fit(champion.flow, data=non_test)
+
+# get the coefficient estimates for the champion model
+champion.model |> extract_model() |> 
+    coefplot(lambda = lambda.champion |> pull(penalty), 
+             plot=FALSE)
+
+```
+
+## In-time and out-of-time error estimates
+
+Now, we have the champion model.  We can then apply the champion model to the in-time and out of time test sets to get an estimate of the $\sqrt{MSE}$.
+
+This part is left out as an exercise for you to do.
+
+# Exercises
+
+We will use a subset of the `bdims` dataset in `openintro` package. The dataset that we will use is called `d` (see below).  
+
+```{r}
+library(openintro)
+dim(bdims)
+names(bdims)
+
+# Creating dataset for the demo
+d = bdims[,c("wgt", "sex", "age", "sho_gi", "che_gi", 
+"thi_gi", "bic_gi", "for_gi", "kne_gi")]
+
+# See descriptions of the interested variables
+?bdims
+
+str(d, strict.width = 'cut')
+```
+
+1. Are all the variables in the correct data types?  If not, please convert the variable(s) into the correct data type(s).
+
+```{r}
+d$sex <- as.factor(d$sex)
+```
+
+
+We want to build a linear model with all, or a subset, of the variables in our dataset to predict the Weight of a person.  
+
+2. Use the ggpairs() function in the `GGally` package to graph the pairwise relationships between the variables and color the data points for male and female with different colors.  To save you time, the code chunk below provides you the partial code for making the matrix plot.  Please fill in the answers at appropriate places.  
+
+Why do we want to color the data points for male and female with different colors?
+
+Also, it is better to place the variable Weight on the bottom row of the matrix plot.  Why?
+
+```{r fig.height=7, fig.width=8, message=F, tidy = F, eval = F}
+
+library(ggplot2)  
+library(GGally)
+
+ggpairs(d, mapping = aes(colour = sex), columns = c(2:ncol(d), 1), # see help manual
+         upper = list(continuous = wrap("cor", size = 3)),
+         diag = list(continuous = wrap("densityDiag", alpha = .4)),
+         lower = list(continuous = wrap("points", alpha = .4, size = .5)),
+        legend = c(4,1)) + # see ch 2.3
+    labs(title = 
+             'Pairwise relationship between the variables in the\n dataset') +
+  theme(axis.text.x = element_text(angle = 90), 
+        legend.position = "bottom") + # see ch 4.2
+ scale_fill_discrete(labels = c("Female", "Male"))
+```
+
+> We want to color the data points based on sex because we can distinguish the gender differences between the variables and see the varying relations between body dimensions for males and females. It is better to place the variable Weight on the bottom row of the matrix plot because it's the y-intercept for the model and can be used as a baseline for the rest of the variables within the dataset to be compared with as the relationship changes with gender. It'll also make it easier to analyze the data and notice any patterns with wgt representing the y-axis.
+
+*Answer questions 3-5 with the scatterplot matrix.  No code is required for these questions.*
+
+3. Should `sex` be included as one of the variables in the model?
+
+>. Yes, sex should't be included as one of the variables because it's a factor and categorical variable that is used to compare the different subplots within the matrix. As well, it's a predictor that should be present within the model and will have an effect on the variables since we're comparing gender differences in body dimensions.
+
+4. Explain why yes or why not: should *all* of these variables be included in our model as predictors: `che.gi`, `sho.gi`, `bic.gi` and `for.gi`?
+
+>. No, all of these variables shouldn't be included in our model because some of them are collinear which means their correlation coefficient is close to 1 so there's no need to include it in the model for the prediction and it's value will end up being close to 0.  
+
+5.  Do you expect `age` to be a better predictor compared to other continuous variables in the dataset?
+
+>. I don't expect age to be a better predictor because it has a lower correlation coefficient than other variables.
+
+6. *Next, we will build a linear model with the LASSO.*  Use the {tidymodels} package and follow similar steps demonstrated in Ch7.2 lecture notes.
+
+
+(a) Split the data into non-test (~85%) and test set (~15%).  Use set.seed(2901).  Make sure that the non-test and test sets have similar proportions of females.
+
+```{r}
+set.seed(2901)
+d_split = initial_split(d, prop=0.85, strata='sex')
+d_split
+
+non_test = training(d_split)
+test = testing(d_split)
+```
+
+
+(b) Define the recipe, model specifications and workflow for the model.  Your recipe should 
+
+* convert all the factors in the dataset into one or more dummies for the model.   
+* remove any X-variables that have low variance.  
+* standardize all the X-variables, incluiding the dummies
+
+Set up the model specifications in such a way that we can have `R` to consider multiple possible values of $\lambda$.  Please use $\sqrt{MSE}$ as the metric to evaluate the candidate models.
+
+```{r}
+rec1 = recipe(wgt ~ ., data = non_test) |>
+  step_dummy(all_nominal(), one_hot = T) |>
+  step_nzv(all_predictors()) |>
+  step_normalize(all_predictors())
+
+
+print.data.frame(
+  head(
+    bake(
+      prep(rec1),
+      new_data = non_test
+    )
+  )
+)
+
+head(non_test)
+
+lin_spec1 = linear_reg(penalty = tune()) |> # question: do I need to add mixture = 1 for lasso model?
+  set_engine("glmnet")
+lin_spec1
+
+# Establish metric/metrics
+loss_fn = metric_set(rmse) # possible choices are rmse and mae
+
+flow1 = workflow() |>
+  add_recipe(rec1) |>
+  add_model(lin_spec1)
+flow1
+```
+
+(c) Use set.seed(2901).  Tuning for the parameter $\lambda$ with 8-fold cross validation.  Consider 100 possible values for $\lambda$.  Make sure that each fold has similar proportions of females.
+
+```{r}
+set.seed(2901)
+k_folds = vfold_cv(data=non_test, v = 8, # k is the fold number
+strata='sex', repeats= 1)
+
+library(tictoc)
+tic()
+tune.result = tune_grid(
+    object = flow1, # the defined workflow
+    resamples=k_folds, # the output of vfold_cv(...)
+    grid=100,  # the number of possible lambda values to be considered
+    metrics=loss_fn, # the metric
+    control=control_grid(verbose=TRUE) # logging results as they are generated
+)
+toc()
+# 18.706 sec elapsed
+```
+
+
+(d) Provide the plot for $\sqrt{MSE}$ v.s. $\lambda$ on a log-scale. Find the biggest $\lambda$ that gives a $\sqrt{MSE}$ that is within one SE of the lowest $\sqrt{MSE}$.  Compare this number with the $\lambda$ value that gives the lowest $\sqrt{MSE}$.  
+
+```{r}
+tune.result$.metrics[[1]] # see the average rmse/mas values for each choice of lambda
+tune.result |> show_best(metric='rmse', n = 1)# returns the lambda 
+                                                 # values for the top n models in terms
+                                                 # of rmse
+tune.result |> collect_metrics() # reorganize the rows in an 
+                                  # decreasing order of the lambda values
+tune.result |> autoplot() +
+labs(x = "lambda values",
+title = "RMSE v.s. Lambda Values")
+```
+
+(e) Obtain the champion model.  What are the variables included in the champion model?  What are the coefficient estimates for these variables? 
+
+```{r}
+# Finalize the lambda value for our champion model
+lambda.champion = tune.result |> 
+                      select_by_one_std_err(metric='rmse', desc(penalty)) 
+lambda.champion
+
+# get the coefficient estimates for the champion model
+champion.model |> extract_fit_engine() |> 
+    coef(s = lambda.champion |> pull(penalty))
+
+```
+
+>. The y-intecept (wgt), sho_gi, che_gi, thi_gi, for_gi, kne_gi, sex_X0 are the variables that are included in the champion model.
+
+(f) (Optional) Verify your result in part e by manually fill in the number for lambda and fit the model with the entire non-test set, just like what you did in PLE_wk10.
+
+```{r}
+# finalize the lambda value for the workflow for the champion model
+champion.flow = flow1 |> 
+    finalize_workflow(
+        parameters = lambda.champion 
+        
+    ) # finalize the lambda value for the model
+
+# fit the champion model on the entire non_test set
+champion.model = fit(champion.flow, data=non_test)
+champion.model
+```
+
+
+
+

@@ -1,0 +1,167 @@
+---
+title: "Week 10 Pre-lecture exercises"
+author: 
+subtitle: ''
+date: ""
+output:
+  pdf_document:
+    fig_caption: yes
+  html_document:
+    df_print: paged
+geometry: margin=1in
+fontsize: 10pt
+editor_options:
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.align="center", collapse=T, comment="", prompt=F, 
+                      echo = T, cache=F, autodep=T, tidy=F, dev='png', 
+                      dpi=300, out.height = '50%', out.width = '100%',
+                      tidy.opts=list(width.cutoff=63), dev='png')
+options(width=63)
+```
+
+Remember that you can adjust the speed and the size of the videos.  Please knit the .rmd file and **submit your solutions in a .pdf** file on Canvas.
+
+Please watch the videos from the *Week10* playlist under the *Panopto Video* tab on Canvas. The file PLE10_demo.rmd contains the code used in the video.  You should just run the code from the file instead of writing the code from scratch on your own, since you are note required to be able to memorize the functions in the {tidymodels} package.
+
+Before you start, please make sure that you have the following packages installed: {coefplot}, {tidymodels}, {glmnet}, {tictoc}.
+
+
+1. We would like to make a model to predict the petal width of an iris with some or all of other variables in `iris`.  
+
+Use GGally::ggpairs() to make a matrix of scatterplots for the columns in the `iris` dataset (to save time, please don't worry about the legends or labels etc., since this is just a PLE question), and color the points by the species categories.  Based on the graphs only, which variable seems to be least relevant for predicting `Petal.Width`?  Also, which two continuous variables seem to influence `Petal.Width` in a similar way?
+
+```{r fig.height= 7}
+GGally::ggpairs(iris, columns = 1:4, ggplot2::aes(color = Species))
+```
+
+>. Based on the graphs, Sepal.Width seems to be the least relevant to predicting Petal.Width because the scatterplot shows a less closely concentrated and uniform increasing linear trend than Petal.Length and Sepal.Width. Similarly, Sepal.Length and Petal.Lenth seem to influence Petal.Width in a similar way since the points in both scatterplots are scattered quite randomly yet still upward in relation to Petal.Width.
+
+In the next few questions we will go though the process of building a linear model for predicting `Petal.Width`.
+
+
+2. First, split the data into non-test (~80\%) and test sets (~20\%), and make sure that the two sets share similar proportions for the species categories (I forgot to mention this in the videos: Setting `strata='sex'` in `initial_split()` ensures that the non-test and test set have similar proportions of the males and females).  Use `set.seed(7320)` for the split.  
+
+```{r}
+library(tidymodels)
+set.seed(7320)
+iris_split = initial_split(iris, prop=0.8, strata='Species')
+iris_split
+
+non_test = training(iris_split)
+test = testing(iris_split)
+```
+
+3. Create a recipe that transforms the categories in `Species` into dummy variables.  Specify that we will use Ordinary Linear Regression to fit a linear model to predict `Petal.Width` by using all other variables in the dataset.  Create a workflow by telling R that we will first use our "recipe" to process the dataset and then fit the `lm` model that we specified. 
+
+Note that you do not need to use all the step-functions shown in the videos.  
+
+```{r}
+rec1 = recipe(Petal.Width ~ ., data = non_test) |>
+  step_dummy(all_nominal(), one_hot = F)
+
+print.data.frame(
+  head(
+    bake(
+      prep(rec1),
+      new_data = non_test
+    )
+  )
+)
+
+head(non_test)
+
+lin_spec1 = linear_reg() |>
+  set_engine("lm")
+lin_spec1
+
+flow1 = workflow() |>
+  add_recipe(rec1) |>
+  add_model(lin_spec1)
+flow1
+```
+
+4. Now, fit the model by using the non-test set and carry out the workflow that you defined in the last question.  Assign the output from the `fit()` function to the variable `fit1`.  Report the coefficient estimates, and plot these estimates with their confidence intervals to see if any of the interval estimates cover zero.
+
+```{r}
+fit1 = fit(flow1, data = non_test)
+
+fit1 |> extract_fit_engine() |> coef() # look at the estimates
+
+fit1 |> extract_fit_engine() |> summary() # look at the summary of the outputs
+
+library(coefplot)
+fit1 |> extract_fit_engine() |> coefplot(sort='magnitude')
+```
+
+5. Use the `lm()` function (that you learned in Topic 4 of the lecture notes) directly to fit the model specified in the last question.  Compare the coefficient estimates produced by the `lm()` function with the ones produced in the last question.  Are they identical?
+
+
+
+```{r}
+lm(data = non_test, Petal.Width ~ .)
+```
+
+>. Yes, the coefficient estimates produced by lm() and from the previous question are identical.
+
+
+6. Now, create a new recipe for fitting a LASSO regression model. For LASSO regression, remember that we will need to standardize the numeric X-variables, so please make sure that you have this step in the recipe.
+
+Now, create a new workflow and specify that we are going to use the LASSO to estimate the coefficients in the model.  Set $\lambda = 0.5$ for this question (we will discuss more in lecture on what lambda values to use in general).  
+
+Fit the model with the non-test set.  Which X-variable(s) was/were selected for the model. Also, print the numeric estimates of the coefficients.   
+
+Given that the model only includes one predictor, check that the choice of this predictor makes sense.  In other words, go back to take a look at the matrix plot in question 1 to see why it makes sense that the model chooses this variable as the predictor in the model.   
+
+
+
+```{r}
+rec2 = recipe(Petal.Width ~ ., data = non_test) |>
+step_dummy(all_nominal(), one_hot=T) |>
+step_normalize(all_predictors())
+
+# check if the recipe works properly
+print.data.frame(
+tail(
+bake(
+prep(rec2), # prep() just layout the steps in the recipe
+new_data = non_test
+) # bake() process the steps on the new data
+)
+)
+```
+
+```{r}
+# set engine
+lin_spec2 = linear_reg(penalty = .5) |>
+set_engine('glmnet')
+lin_spec2
+
+# create workflow
+flow2 = workflow() |>
+add_recipe(rec2) |>
+add_model(lin_spec2) # add lm model--lin_spec1 was defined earlier
+# same as: add_model(set_engine(linear_reg(), 'lm'))
+flow2
+```
+
+
+```{r}
+# fit the model
+fit2 = fit(flow2, data = non_test)
+# look at the estimates on the graph for lambda=1.5
+fit2 |> extract_fit_engine() |>
+coefplot(sort='magnitude', lambda=.5)
+
+# look at the estimates
+fit2 |> extract_fit_engine() |>
+coef(s=3)
+```
+
+>. The y-intercept (setosa), Sepal.Length, Sepal.Width, Petal.Length, versicolor, and virginica were selected as the X-variables for the model which is similar to the X-variables selected for the model in Q4. It makes sense that the model would choose Petal.Length as the one predictor, based on the coefficient plot, because of the matrix plot in Q1. In Q1, Petal.Length shows a clear strong, positive linear trend in the scatterplot with its relationship to Petal.Width which is why this predictor makes sense in this specific model for Q6.
+
+
+
+

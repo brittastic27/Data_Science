@@ -1,0 +1,101 @@
+---
+title: "Week 5 Pre-lecture exercises"
+author: ''
+date: ""
+output:
+  pdf_document:
+    fig_caption: yes
+  html_document:
+    df_print: paged
+geometry: margin=1in
+fontsize: 10pt
+editor_options:
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.align="center", fig.height=4.5, fig.width=5, collapse=TRUE, comment="", prompt=FALSE, echo = TRUE, cache=F, autodep=TRUE, tidy=TRUE, tidy.opts=list(width.cutoff=50))
+options(width=75)
+```
+
+Please watch the videos from the *Week5* playlist under the *Panopto Video* tab on Canvas.  
+Remember that you can adjust the speed and the size of the videos too. Please knit the .rmd file and submit your solutions in a .pdf file on Canvas.
+
+
+The link below would be helpful if you want to use Greek letters and math symbols in a markdown file.
+
+https://www.overleaf.com/learn/latex/List_of_Greek_letters_and_math_symbols
+
+1. Use the `iris` dataset.  Estimate the coefficients for the following model:
+
+$$
+Sepal.Width =\beta_{0}+\beta_{l}Sepal.Length+error
+$$
+```{r estimate-coeffs}
+mod = lm(data = iris, Sepal.Width ~ Sepal.Length)
+mod$coefficients
+```
+
+According to your findings, what is estimated slope and y-intercept of this model?  According to your fitted model, the longer the sepal for an iris, the wider or narrower of the sepal?  Does this make sense according to the physical meaning of the variables? Investigate the potential problem by plotting the scatterplot of the two variables of interest, and make another plot with the same variables but color the data points by Species.  You can omit the axis labels and the titles for the graphs for this question.
+
+```{r question-1}
+library(ggplot2)
+# estimated y-intercept
+mod$coefficients[1]
+# estimated slope
+mod$coefficients[2]
+
+ggplot(iris) +
+  geom_point(mapping = aes(x = Sepal.Length, y = Sepal.Width))
+
+# Color data points by species
+ggplot(iris, mapping = aes(x = Sepal.Length, y = Sepal.Width, color = Species)) +
+  geom_point()
+```
+
+> According to my fitted model, the longer the sepal for an iris, the narrower the sepal because the slope is negative and less than 1 which means a slow rate of change (less steep). For a flower petal, width is commonly smaller than length. However, the fact that the slope is negative is a bit confusing and doesn't align with real world properties of a flower petal; the width shouldn't necessarily be shrinking while the length grows. Based on the scatterplot, I can see that I was correct in assuming that Sepal.Length is often longer than Sepal.Width and the points show a decreasing trend base on species which aligns with the negative slope represented in the model. 
+
+
+2. To fit the model with just the y-intercept, i.e.,
+
+$$
+Sepal.Width =\beta_{0}+error
+$$
+
+
+the syntax is as follows (here, `1` stands for the y-intercept)
+
+```{r}
+lm(Sepal.Width ~ 1, data = iris)
+```
+
+
+Compare the y-intercept estimate of this model with the mean of `Sepal.Width`.  Are they equal?  This phenomenon happens to every dataset.  Can you guess why this makes sense?
+
+```{r}
+summary(iris$Sepal.Width)
+# mean of Sepal.Width = 3.057
+# y-intercept of this model = 3.057
+```
+
+> Yes, the y-intercept estimate of this model and the mean of Sepal.Width are equal. The y-intercept is when Sepal.Length = 0 but that wouldn't necessarily occurr naturally in nature for a flower petal so the y-intercept isn't a reliable measure of anything meaningful. It makes sense for the y-intercept and the mean of Sepal.Width to be equal because given an x-value, the prediction for the corresponding y-value is the mean of all the y-values with that x-value. So, the line of regression is forced to pass through the averages
+
+3. Terminology in linear modeling can be confusing because different fields use different terms for the same concept. For each term listed below, indicate which of the following it is equivalent to: *x-variable* and *y-variable*. (Hint: The answer to this part of the question can be found in Ch 4.1.)
+
+Predictor, response variable, regressor, explanatory variable,
+dependent variable, independent variable,
+outcome variable, covariate, target variable, feature variable.
+
+
+Terms equivalent to **x-variable** are:
+Predictor, regressor, independent variable, explanaory variable, covariate, feature variable
+
+Terms equivalent to **y-variable** are:  
+Response variable, dependent variable, outcome variable, target variable
+
+
+(Fill in the blank) The **slope and y-intercept** of a linear model are also called the coefficients (this should be an English word) of the model.
+
+(Complete the sentence) To fit a linear model means to find the values for the \(\beta '\)s that minimize the sum of squares
+
+(Fill in the blank) In the expression $\hat{\beta_0}$ the hat indicates that the quantity is the predicted value/estimate of the true parameter $\beta_0$.

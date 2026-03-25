@@ -1,0 +1,337 @@
+---
+title: "Precept 5 Exercise Answers"
+author: "Your Name"
+date: ""
+output:
+  pdf_document:
+    fig_caption: yes
+    toc: no
+  html_document:
+    df_print: paged
+    toc: no
+geometry: margin=1.5in
+editor_options: 
+  chunk_output_type: console
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.align="center", fig.height=5.5, fig.width=6, collapse=TRUE, comment="", prompt=FALSE, echo = TRUE, cache=TRUE, autodep=TRUE, tidy=FALSE, tidy.opts=list(width.cutoff=60))
+options(width=63)
+```
+
+# Objectives
+
+* Being able to fit linear regression models with R
+* Being able to interpret the results of linear regressions
+* Being able to verify some of the assumptions in linear regression
+
+
+# Main Concepts
+
+## To fit a linear model 
+
+$$
+y_{i} =\beta_{0}+\beta_{1}X_{1}+ \beta_{2}X_{2} + ... + \beta_{k}X_{k} +\epsilon_{i}
+$$
+where the $X_i$ are continuous variables. The `R` code to fit the model above is
+
+```{r eval = F}
+lm(y~x1 + x2 + ... + x3, data = data_frame)
+
+```
+
+## Summaries of the fitted model
+
+If we store the fitted model in an object `mod`:
+
+```{r eval = F}
+mod = lm(y~x1 + x2 + ... + x3, data = data_frame)
+```
+
+we can get information of the model with the `summary()` function:
+
+```{r eval = F}
+summary(mod)
+```
+
+We can retrive the information stored in `mod` by calling the element names.  To see the list of the elements run the following
+
+```{r eval = F}
+mod.summ = summary(mod)
+ls(mod.summ)
+
+# [1] "adj.r.squared" "aliased"       "call"          "coefficients" 
+#  [5] "cov.unscaled"  "df"            "fstatistic"    "r.squared"    
+#  [9] "residuals"     "sigma"         "terms"   
+```
+
+`mod.summ` behaves like a list.  For example, we can get the coefficient estimates of the model by using
+
+```{r eval = F}
+mod.summ$coefficients
+
+# or by just using the first four letter of the element name if
+# there is no ambiguity:
+mod.summ$coef
+```
+
+We are not going to talk about all the elements in the summary of the fitted model in this course.  For the ones that we cover in this course, we will introduce them one at a time.  For now, you just need to know `coef`, `residuals` `r.squared` and `adj.r.squared`.
+
+## How to code for a variety of models
+
+### Include/exclude the y-intercept in the model
+
+By default, `R` always assumes that your model has a y-intercept.  This is a good thing since most of the time, a model should have a y-intercepts unless there is a reason that makes us believe that it should not.  The y-intercept is symbolized by the number `1` in a model.  Thus, the code to fit the following model 
+
+$$
+y_{i} =\beta_{0} +\epsilon_{i}
+$$
+
+is
+
+```{r eval = F}
+lm(y~1, data = data_frame)
+```
+
+and the code to fit the following model that has no y-intercept 
+
+$$
+y_{i} =\beta_{1}X_{1}+\epsilon_{i}
+$$
+
+is
+
+
+```{r eval = F}
+lm(y~x1 - 1, data = data_frame)
+```
+
+### Include all the columns
+
+The term *Predictors* refers to the x-variables in a model.  To include all the columns in our data frame, except the one for the y-variable, as the predictors for the model, we can use the following syntax:
+
+```{r eval = F}
+lm(y~., data = data_frame)
+```
+
+Thus, `.` means including all the columns as predictors, except the one for y.  For example, if we want a model includes all the columns in data_frame, except the x1 column and the one for y, we will use
+
+```{r eval = F}
+lm(y~. - x1, data = data_frame)
+```
+
+
+### Include dummy variables in the mathematical form of the model
+
+Dummy variables are introduced by using factors in the `lm()` function when fitting the model.  For example, the column `Species` is a factor and the following code  
+
+```{r eval = F}
+lm(Sepal.Width ~ Species, data = iris)
+```
+
+corresponds to the mathematical model
+
+$$
+y_{i}=\beta_{0}+\beta_{ver}\cdot\mathbf{1}_{ver, i}+\beta_{vir}\cdot\mathbf{1}_{vir, i}+\epsilon_{i}
+$$
+for $i = 1, 2, ...,150$.
+
+### Interaction terms
+
+Interaction terms are denoted with `:` in R.  For example, the interaction between `x1` and `x2` is `x1:x2` as in:
+
+```{r eval = F}
+lm(y~x1 + x2 + x1:x2, data = data_frame)
+```
+
+Usually, when we have the interaction `x1:x2` in our model, we will also include the individual terms `x1` and `x2` in our model.  Thus, it will be convenient to have a shorthand notation for `x1 + x2 + x1:x2`.  There is!  The shorthand notation is `x1*x2`.  Thus, the following two models are equivalent:
+
+```{r eval = F}
+lm(y~x1 + x2 + x1:x2, data = data_frame)
+mod = lm(y~x1*x2, data = data_frame)
+
+```
+
+
+
+# Exercises 
+
+Please install the package `openintro` for this precept.
+
+## Question 1 
+
+
+Using the dataset `possum` in the package {openintro}, we will generate a linear model to predict the total length of a possum.
+
+```{r}
+library(openintro)
+str(possum)
+```
+
+a) Use the ggpairs() function to investigate the pairwise relationship between the variables.  Remember that we can adjust the height and the width of the graph by adjusting the `fig.height` and `fig.width` options for code chunks.  For the graphs that are above the diagonal, if both the x- and y-variables are continuous, please provide the correlation coefficient values for the two variables.  For the graphs that are below the diagonal, if both the x- and y-variables are continuous, please make a scatterplot of the two variables.  Note that there is an advantage of placing `total_l` in the last column in matrix plot:  For all the plots shown on the last rows of the matrix plot, they display `total_l` as the y-variable and one of the other columns as the x-variable.
+
+If we want to use one of the continuous variables (other than `total_l`, of course) in the dataset to predict the total length of a possum, which variable do you suggest to use?  Explain why.
+
+```{r question-a}
+library(ggplot2)
+library(GGally)
+ggpairs(possum,
+        columns = 1:ncol(possum),
+        title = "Pairwise Relationships between Possum Variables",
+        lower = list(continuous = "points"),
+        upper = list(continuous = "cor"))
+```
+
+> I'd suggest using head_l to predict the toal length of a possum because head_l has a high correlational coefficient with total_l in comparison to the other variables which means head is another good measure for total length
+
+b) Regress `total_l` on the variable that you selected in part (a); i.e., fit a model to predict `total_l` with the variable that you selected in part (a).  Report the adjusted $R^2$ value (you can look for this number in the output).  Also, plot the scatterplot for `total_l` v.s. the selected variable with the fitted regression line superimposed.
+
+You can use the following code for making the labels
+
+```
+  labs(x="Head Length", y="Total Length",
+  title = "Total Length (cm) vs. Head Length (mm)") 
+```
+
+```{r question-b}
+mod = lm(total_l~head_l, data = possum)
+
+ggplot(data = possum, mapping = aes(x = head_l, y = total_l)) +
+  geom_point() +
+  geom_smooth(method = "lm", se=F, linewidth = 1.5, alpha=.5) +
+  labs(x="Head Length", y="Total Length",
+  title = "Total Length (cm) vs. Head Length (mm)")
+
+summary(mod)$adj
+```
+
+
+c) Add the variable `sex` into the model and refit the model by filling in the contents for `lm()` below.  
+
+
+```{r eval = F}
+# Fit model
+mod2<- lm(total_l~head_l + sex, data = possum)
+mod2
+```
+
+
+
+The y-values predicted by your model based on the x-values in the dataset are also called the "fitted values".  We can extract out the fitted values by calling `mod2$fitted.values`.
+
+The code in the following code chunk will plot the scatterplot with different colors for different genders of the possums.  It also adds the predicted regression lines that you made with `mod2` to the graph.  Please run the code below (you will need to change `eval = F` to `eval = T`.) to see the graph.  You are not responsible for knowing how the code works.
+
+
+```{r eval = T}
+# Fit model
+summary(mod2)
+
+
+fit2 = data.frame(possum, mod2 = mod2$fitted.values)
+
+# Plot data
+ggplot(data=fit2) + 
+  geom_line(aes(x=head_l, y=mod2, color=sex), size= 1.5) + 
+  geom_point(aes(x=head_l, y=total_l, color=sex)) + 
+  labs(x="Head Length", y="Total Length",
+  title = "Total Length (cm) vs. Head Length (cm)") 
+```
+
+
+Now modify your model by adding the interaction term between `sex` and `head_l` to the last model. 
+
+```{r eval = F}
+
+# Model
+mod3  = lm(total_l~head_l*sex, data = possum)
+mod3
+```
+
+
+
+plot the scatterplot for `total_l` v.s. the selected variable with the fitted regression line generated by `mod3` superimposed.
+
+```{r}
+mod3  = lm(total_l~head_l*sex, data = possum)
+ggplot(data = possum, mapping = aes(x = head_l, y = total_l, color = sex)) +
+  geom_point() +
+  geom_smooth(method = "lm", se=F, linewidth = 1.5, alpha=.5) +
+  labs(x="Head Length", y="Total Length",
+  title = "Total Length (cm) vs. Head Length (mm)")
+```
+
+
+
+What are the adjusted `R^2` for models 2 and 3?  Which of the three models fits the data best based on the adjusted `R^2` values?
+
+```{r}
+summary(mod2)$adj
+summary(mod3)$adj
+```
+
+> mod3 fits the data best because it has the highest adjusted R^2 of the three mdoels
+
+d) With the simpler model (i.e., `mod2`) in part (c), predict the total length of a possum if the possum is female and has head length 92.4 mm; what if it is a male possum with head length 86.4 mm?
+
+> For the female possum, I'd predict it's total length would be about 88.12 cm. For the male possum, I'd predict it's total length would be about 80.87 cm.
+
+```{r}
+# Female possum; total length (total_l) is 88.12
+sum(mod2$coefficients*c(1,92.4,0))
+
+# Male possum; total length (total_l) is 80.87
+sum(mod2$coefficients*c(1,86.4,1))
+
+```
+
+
+e) Assume that your model already has an intercept term, if a factor variable with 3 categories (i.e., with 3 levels) is added to the syntax in the R code, how would this affect the mathematical form of your model?  E.g., if the original model is
+
+```{r eval = F}
+mod.origin <- lm(y ~ 1, data=some.data.frame)
+```
+
+and the updated model is
+
+```{r eval = F}
+mod.with.factor <- lm(y ~ f.var, data=some.data.frame)
+```
+
+where `f.var` is a factor vector with 3 levels: $f_1, f_2, f_3$.  What will the mathematical forms of the original and the updated models be?  Write out these models in their mathematical forms (you can copy and paste the mathematical formulas in the Main Concepts section to modify.  Please ask for help from your preceptor if you are confused about what the symbols mean).
+
+How does including the factor variable affect the prediction line?  Hint: Look at  `mod2` in part c.
+
+**Mathematical form of mod.origin:**
+$$
+y_{i} =\beta_{0} +\epsilon_{i}
+$$
+
+
+
+**Mathematical form of mod.with.factor:**
+$$
+y_{i}=\beta_{0}+\beta_{f, 1}\cdot\mathbf{1}_{f, 1} + \beta_{f, 2}\cdot\mathbf{1}_{f, 2} + \beta_{f, 3}\cdot\mathbf{1}_{f, 3} +\epsilon_{i}
+$$
+
+
+
+
+f) Say, we include the factor in part e, a continuous variable, and an interaction term of the two in our model; e.g., now the model is
+
+```{r eval = F}
+mod.with.factor <- lm(y ~ f.var*cont_var, data=some.data.frame)
+``` 
+
+
+What kind of flexibility does your model have?  For example, can the prediction line(s) have different y-intercept for each categories in `f.var`? Are there any other additional features the prediction line(s) gains by including the interaction term in the model? 
+
+you can just explain this in words; you do not need to provide the mathematical form of the model.  
+
+Hint: Look at the result of `mod3` in part c.
+
+> Yes, the model can have different y-intercepts for different levels for the prediction lines. Including an interaction term between a factor (with m levels) and a continuous variable in the model will induce (m-1) variables, one for each level of the factor except for the first level, to the mathematical model and allow the model to have a different slope for different levels for the prediction line.
+
+
+
+

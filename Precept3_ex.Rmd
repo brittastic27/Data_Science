@@ -1,0 +1,349 @@
+---
+title: "Week 3 Precept Answers"
+author: "Your Name"
+date: ""
+output:
+  pdf_document:
+    fig_caption: yes
+    number_sections: no
+    toc: no
+    toc_depth: 3
+  html_document:
+    df_print: paged
+    toc: no
+    toc_depth: '3'
+geometry: margin=1.5in
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.align="center", fig.height=4, fig.width=6, collapse=TRUE, 
+                      comment="", prompt=FALSE, echo = TRUE, cache=F, autodep=F,
+                      tidy.opts=list(width.cutoff=57),tidy=TRUE)
+options(width=63)
+```
+
+# Objectives
+
+* Practice on how to write a function
+* Getting familiar with functions in the {ggplot2} package
+* Understand how shifting and scaling affect a dataset 
+* Learn how to interpret histograms and scatterplots
+
+
+# Key Concepts
+
+
+## Defining a functions:
+
+The syntax for defining a function is
+
+```
+function_name = function(input1 = ..., input2 = ..., input3 = ..., ...){
+    tasks that you want your function do
+    return(result_to_return)
+}
+```
+`return()` is optional.  The output of the last step that you evaluate in the function body will automatically be returned if `return()` is not used.
+
+
+
+## Producing graphs with the {ggplot2} package
+
+In general the syntax for making a plot with the {ggplot2} package has the following pattern:
+
+```
+ggplot(dataframe_used_for_the_plot) +
+    geom_function(mapping = aes(x = ..., ...)) + 
+    lab(x = ..., y = ..., title = ...)
+```
+
+Some geom_functions that you have learned so far: 
+
+* geom_point()
+* geom_vline()
+* geom_hline()
+* geom_histogram()
+* geom_boxplot()
+* geom_violin()
+* geom_density()
+* geom_smooth()
+
+Depending on which geom_function() you are using,
+additional potential variables for aes() are: `y`, `color`, `fill`, `size`, and that for geom_function() are: `color`, `fill`, `size`, (`binwidth` for `geom_histogram()`)
+
+To add labels you can use `labs(title = ..., x = ..., y = ...)`.
+
+
+**For `geom_histogram()`:**
+
+* **binwidth**: adjust the bin width of a histogram
+
+**For any geom_function() graphs:**
+
+* `facet_grid(row faceting variable ~ column faceting variable)` forms a matrix of panels defined by row and column faceting variables.
+* **alpha**: This is used in a geom_function to adjust the opacity of a geom. Values of alpha range from 0 to 1, with lower values corresponding to more transparent colors.
+
+
+# Exercises
+
+Please **provide clear labels** for all the plots that you create.
+
+## Question 1 User defined functions.
+
+We will create a data frame for the example here.  Please do not worry about how the data frame was generated.
+```{r include = F}
+set.seed(1234)
+# Let the following be the departments and education levels of
+# students in a given course
+major = c("Economics", "Biology", "Neuroscience", "Philosophy", "CS")
+education = c("Freshman", "Sophomore", "Junior", "Senior")
+
+# The data for the 40 students in the class. By using the input
+# argument `length`, we can make sure that all vectors are of the same size
+major.vec = rep(major, times = c(5, 13, 7, 2, 13))
+ed.vec = rep(education, length = length(major.vec)) 
+grades = runif(length(major.vec), min=60, max=100) 
+# generate grades; Preceptors: no need to explain to student what runif() does;
+# it's enough to just say that this generates some values for
+# `grades`.
+
+students = data.frame(st.major = major.vec,  
+                          st.ed = ed.vec,  
+                          st.grade = grades)
+
+```
+
+Take a look at the data frame.
+
+```{r}
+dim(students)
+
+head(students, n = 10)
+```
+
+
+
+Create a function `avg.score(df, major, year)`.
+`avg.score()` should take a data frame like `students` and calculate the average score for students of a particular class standing and a certain major.  For example, `avg.score(df = student, major = 'Biology', year = 'Sophomore')` should return the average score for all the sophomore Biology majors recorded in the data frame `students`.
+
+Once you have created `avg.score()`, modify your code with the function `tolower()` to make your function more flexable so that your users do not have to capitalize their inputs for `major` and `year`.  The code chunk below shows how `tolower()` works.
+
+```{r}
+tolower('Pairs') # convert all letters in a character string into lower cases
+
+# convert all letters in a character vector into lower cases
+tolower(c('Pairs', 'Berlin', 'New Delhi'))
+tolower(c('Pairs', 'Berlin', 'New Delhi', 'WASHINGTON, D.C.'))
+```
+
+```{r}
+library(dplyr)
+avg.score = function(df, major, year) {
+  df |>
+    filter(st.major == major & st.ed == year) |>
+    summarise(score = mean(st.grade))
+}
+
+avg.score = function(df, major, year) {
+  tolower(c(major, year))
+  df |>
+    filter(st.major == major & st.ed == year) |>
+    summarise(score = mean(st.grade))
+}
+```
+
+Once you have modified your function, run the following lines to see what answers you get (you should remove `eval = F`).  Subset the relevant rows from `students` to verify that your function is working as expected.
+
+```{r}
+# check to see if your function works properly
+avg.score(df = students, major = 'Biology', year = 'Sophomore')
+avg.score(df = students, major = 'economics', year = 'senior')
+```
+
+
+
+
+
+
+
+**Use the dataset `airquality` for the rest of the questions.**
+
+## Question 2 How transformations affect the distribution of data
+
+
+In the `airquality` dataset the maximum daily temperatures were recorded in degrees Fahrenheit.  
+
+### Part a 
+
+#### Part (i) (the same question as the 1st question in PLE 3a)
+
+(This question is the same as the first question in PLE 3a.  Please feel free to copy and paste the solution from your PLE 3a here.)
+
+Make a histogram for the temperature data.  The bin areas of the histogram should represent the proportions of the data.  Use `white` color for the outlines of the bins, and use `steelblue` for the bins. Set the bin width to be 1 by using `binwidth = 1` in the `geom_` function that you use.  `binwidth = 1` should be placed outside of the `aes()` function.
+
+``` {r question-one}
+library(ggplot2)
+ggplot(airquality) +
+  geom_histogram(mapping = aes(x = Temp, y = after_stat(density)),
+               color = 'white', fill = 'steelblue', binwidth = 1) +
+  labs(title = "Airquality Temperature Distribution")
+```
+
+#### Part (ii)
+
+In Part (i) we asked you to use `binwidth = 1` for the histogram.  However, in real life you will have to decide on the bin width yourself.  Go back to your solution to Part (i) and try various values for the bin width (we suggest trying these values: .5, 1, 2).  Persuade yourself that `binwidth = 1` is a good choice.
+
+``` {r}
+library(ggplot2)
+ggplot(airquality) +
+  geom_histogram(mapping = aes(x = Temp, y = after_stat(density)),
+               color = 'white', fill = 'steelblue', binwidth = 2) +
+  labs(title = "Airquality Temperature Distribution")
+```
+>. binwidth = 1 is the most visually appealing and easiest to read/understand
+
+### Part b
+
+We want to know how the distribution of the temperature data would be affected if the units were converted from Fahrenheit to Celsius.
+
+The formula for the conversion is
+
+$$
+Celsius = (\frac{5}{9})(Fahrenheit - 32)
+$$
+Answer the following questions without running any code or doing any calculations.  If you get stuck you can move to Part 3 and then come back here later.  Part 3 should give you some insight on how to answer these questions.
+
+
+(i) How does subtracting 32 (i.e., adding -32) affect the location and the spread of the histogram?  What if we add 32 instead?  How would that affect the shape and the spread of the histogram?
+>. Subtracting 32 would shift every value in the graph over to the left by 32. The same would occur to the right by 
+adding 32. The histogram would still be asymmetric in either case and the data would be skewed. Proportion density
+would remain the same but placement of the bars would be different
+
+(ii) How does multiplying $\frac{5}{9}$ affect the location and the spread of the histogram for the data in part (i)?  What if we multiply 2 instead?  What about $-2$?
+>. Multiplying by the fraction 5/9 reduces every data value by a factor of 5/9 which means the data would be shifted to
+the left significantly because of this reduction and the spread would changem (become more shrunken). If we multiply by 2, all the temperatures would be doubled, thus shifting the graph to the right due to this increase and the data would be more spread out so shape would change. Proportion density would remain the same but placement and distribution of the bars would be different. If we multiply by -2, it would behave the same as multiplying by 2, just in the opposite direction (to the 
+left - so temperature would be in the negative)
+
+
+(iii) (Fill in the blanks) In general adding a positive number, $a$, to every number in the dataset shift the histogram $a$ unit to the right  (left/right).  Adding a negative number, $-a$, shift the histogram $a$ unit to the left  (left/right).  The spread does not change  (changes/does not change).
+
+In general if we multiply a number $b$ to every number in the dataset, whether $b$ is positive or negative affects the spread of the distribution the same way  (the same way/differently).
+
+If $|b|$ is bigger than 1, the spread of the resulting distribution will be bigger  (smaller/bigger/the same).
+
+
+### Part c
+
+Create a data frame `trans` by adding two columns to `airquality`:
+
+* minus32 = Temp - 32
+* Celsius = (5/9)(Temp - 32)
+
+Make a histogram for the data in `Temp` as what you did in Part a.  Superimpose the density curves for `Temp`, `minus32` and `Celsius` on the graph for the histogram.  You should use different colors to make the curves more distinguishable.  Some common colors are `red`, `green`, `purple`, `black`, `blue` etc.  We will show you how to create a legend later.
+
+Are your answers for Part b consistent with the result shown on the graph?
+
+```{r}
+trans <- airquality |>
+  mutate(minus32 = Temp - 32, Celsius = (5/9) * (Temp - 32))
+
+ggplot(trans) +
+  geom_histogram(mapping = aes(x = Temp, y = after_stat(density)),
+               color = 'white', fill = 'steelblue', binwidth = 2) +
+  geom_density(mapping = aes(x = Temp), color = 'red') +
+  geom_density(mapping = aes(x = minus32), color = 'purple') +
+  geom_density(mapping = aes(x = Celsius), color = 'green') +
+  labs(title = "Airquality Temperature Distribution")
+
+```
+>. Yes, my answers for Part b are consistent with the results shown on the graph
+
+### Part d
+
+Calculate the means and sd's for `Temp`, `minus32`, and `Celsius` in `trans`.
+
+It might be easier if we could restructure the data in the three columns in `trans` and have a long-shape data frame that looks like the following:
+
+```
+ names    values
+   <chr>   <dbl>
+ 1 Temp     67  
+ 2 minus32  35  
+ 3 Celsius  19.4
+ 4 Temp     72  
+ 5 minus32  40  
+ 6 Celsius  22.2
+ 7 Temp     74  
+ 8 minus32  42  
+ 9 Celsius  23.3
+ ```
+
+To do this we can use the `pivot_longer()` function from the {tidyr} package.  Let's look at an example:
+
+```{r}
+library(tidyr)
+
+#### Make dataset for the example
+dat = data.frame(A = c(4, 5, 5), 
+                  B = c(100, 200, 300))
+dat
+#### Make long dataset
+dat %>% pivot_longer(cols = c(A, B), names_to = "AorB", values_to = "AB_values") 
+# cols is for the set of column names that we want to make into a long shape
+# names_to is for the name of the column that contains the original column names
+# values_to is for the name of the column that contains the values in 
+# the original columns
+```
+
+Verify your answers in Part b with the numbers you get for this part.
+
+```{r}
+trans2 <- trans |>
+  pivot_longer(cols = c(Temp, Celsius, minus32), names_to = "diffTemps", values_to = "tempVals")
+  
+trans2 |>
+  filter(diffTemps == "Temp") |>
+  summarise(std = sd(tempVals), mean = mean(tempVals))
+
+trans2 |>
+  filter(diffTemps == "minus32") |>
+  summarise(std = sd(tempVals), mean = mean(tempVals))
+
+trans2 |>
+  filter(diffTemps == "Celsius") |>
+  summarise(std = sd(tempVals), mean = mean(tempVals))
+```
+
+
+## Question 3 Scatterplots
+
+### Part a
+
+Scatterplots can be used to display the relationship between two variables. How does the Ozone level varies with the temperature?
+
+Make a scatterplot for Ozone v.s. Temp (the convention is y v.s. x, so Ozone should be the y-variable).  Color the points with different colors for each month.  Note that in order to do this, the column `Month` needs to be of categorical data type.  The categorical data type is called "factor" in R.  The way to turn a vector into a factor vector is to use the `factor()` function:
+
+```{r}
+# converting an integer vector c(3:10, 3, 3, 10) into a factor vector:
+factor(c(3:10, 3, 3, 10))
+# levels are the unique categories in the factor vector
+```
+
+```{r}
+ggplot(airquality) +
+  geom_point(mapping = aes(x = Temp, y = Ozone, color = factor(Month))) +
+  labs(title = "Ozone vs. Temp")
+```
+
+
+
+### Part b
+
+According to your scatterplot in Part a, does `Ozone` have a positive or negative relationship with `Temp`? Which two months are the coolest?
+Please skip June since it has a lot of missing data.
+
+>. Ozone has a positive relationship with Temp. May and September are the coolest months
+
+

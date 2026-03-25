@@ -1,0 +1,634 @@
+---
+title: "SML 201 Project 1 Speed Dating"
+author: ''
+date: "`r Sys.Date()`"
+subtitle: Solutions
+output:
+  pdf_document:
+    dev: png
+    fig_caption: yes
+    toc: yes  
+    toc_depth: '3'  
+  html_document:
+    df_print: paged
+    toc: yes 
+    toc_depth: '3'   
+geometry: margin=1in
+fontsize: 10pt
+editor_options:
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.align="center", collapse=T, comment="", prompt=F, echo = T, cache=T, autodep=T, tidy=F, warning = F, message = F, tidy.opts=list(width.cutoff=63), dev='png', dpi=200, out.height = '50%', out.width = '100%')
+options(width=63)
+```
+
+
+**Project 1 is due by 11:00pm EST on Monday September 29.** Please submit **both a .pdf and a .rmd** files on Gradescope by the deadline.
+
+**Please do not email your work to any of the instructors in any case** (unless you have no access to Gradescope at the time when the assignment is due--in this case please email the Head TA (see syllabus for contact info) both copies of your .pdf and .rmd files before the deadline and upload the unaltered copies of the files to Gradescope as soon as you regain access to Gradescope).  We need your files to be on Gradescope in order to grade them.  Thus, even if you are late, please still submit the files on Gradescope.
+
+This assignment can be completed in groups of up to 3 students. Feel free to use Ed Discussion to recruit team members.  It is okay to work by yourself, if this is preferred.   You are welcome to get help (you can either ask questions on Ed Discussion or talk to the instructors during office hours) from the instructors; however, please do not post code/solutions on Ed Discussion on a public post.  Please see the *Academic Integrity Policy* tab on Canvas about the course policy.
+
+
+For **problem sets and projects** you may not work with a given student on more than **two assignments**.  For example, if you work with student A on Problem set 1 and Project 1, then you cannot work with student A on any other problem sets and projects. 
+
+
+When working in a group it is your responsibility to make sure that you are satisfied with all parts of the report and the submission is on time (e.g., we will not entertain arguments that deficiencies are the responsibility of other group members).  We expect that you each work independently first and then compare your answers with each other once you all finish, or help each other if someone in your group gets stuck.  Failing to make contributions and then putting your name on a report will be considered a violation of the honor code.  **Please do not divide work among group mates.**  Everyone in your group is responsible for being able to explain the solutions in the report.
+
+For all parts of this project, you **MUST** use R commands to print the output as part of your R Markdown file. You are not permitted to find the answer in the R console and then copy and paste the answer into your report.  **All code and outputs should be visible on your pdf file.**
+
+**If you are completing this project in a group**, please have only **one** person in your group turn in the .Rmd and .pdf files.  Make sure that this person selects the names of all the group mates on Gradescope for the .pdf file--if you are not sure about how to make a group submission please see the video posted under *Assignments > Precept submission instructions* on Canvas.  To receive full credit for this assignment, you must select the pages properly for each problem on Gradescope; again, if you are not sure about how to do this, please watch the video mentioned.
+
+Late problem sets and projects (i.e., being late even after you use a late pass) will be penalized at intervals rounded up to multiples of 24 hours. You will receive a 10% deduction on the score for each 24-hour-late-interval.  For example, if you are 3 hours late, 10% off or if you are 30 hours late, 20% off.
+
+----
+
+Please type your name(s) after "Digitally signed:" below the honor pledge to serve as digital signature(s). 
+
+> I pledge my honor that I have not violated the honor code when completing this assignment.
+
+Digitally signed:
+Brittney Barnwell
+----
+
+**When reporting numerical findings in the [narrative part]{.underline} of your report, please round answers to an appropriate number of digits.  This means that usually having 2 decimal places (e.g., 45.71) is good; however, if the answer has a lot of leading zeros (e.g., 0.000034), you might want to include at 2 or more non-zero digits. Just make sure that you do not report answers in long strings of numbers (e.g., 5.043289); this will make your report look unprofessional.**   When printing out a data frame as part of an answer, you can use `print.data.frame(your_df, digits = 2)`; this will allow you to print out the entire data frame `your_df` and suggest to `R` that you want to have *at least 2* significant digits--you might want to adjust the value for `digits` based on individual cases.  **Remember not to round intermediate calculations and please avoid hard-coding.**  For example, if we updated the dataset *loan_data.csv* with additional rows, your code should still work without any modifications.  
+
+
+----
+
+## Report quality
+
+Unless otherwise specified, please provide code and the output of the code to support all your answers.
+
+In general if your report contains plots, in order to receive full credits, please have sensible titles and axis labels for all your graphs and adjust values for all the relevant graphical parameters so that your plots are informative.  Also, all answers must be written in complete sentences.
+
+### (-3 pts each: code does not run; code does not have proper annotations; student did not select pages correctly for each question on Gradescope)  
+### (-2 pts each: answers are not in complete sentences; report includes an unnecessarily large chunk of a dataset.)
+
+
+
+
+## Before you start
+
+### For-loops are not allowed for this project. 
+
+### Please install the packages, {png} and {grid}, before you knit this .rmd file.  Also, please make sure that you place the three .png files that were posted with this project in the same folder as this .rmd file.
+
+### Note that we set `dpi=200` in the setup chunk, and this allows the graphs you make in this report to have better resolutions.  However, this setting alone will blow up the images in this report.  Thus, we added `out.height = '50%', out.width = '100%'` in the setup chunk. This means that the output graphs should have a width that is 100% of the page width, and a height of 50% of the page height.  You can set these number individually for each code chunk if needed.
+
+-------
+
+## Objective of this project
+
+In this project we will explore a subset of the data that were gathered on participants in 21 experimental speed dating events that took place between 2002 and 2004.  If you were asked to write an article on the behavior of the participants, what can you tell your readers?  Is there a gender difference in terms of the behavior of the participants?  
+
+-------
+
+## Background information
+
+The dataset for this project is a subset of the data published in the paper ``Gender Differences in Mate Selection: Evidence From a Speed Dating Experiment'' by Fisman et al (due to data quality issues the dataset was modified slightly for the analysis in the paper).  
+
+-------
+
+## Question 1 (3 pts) Getting familiar with the dataset
+
+
+Read in the data from `Speed_Dating_Subset.csv` and name this object `dating`.   Make sure to check that you have 8378 observations and 21 variables for `dating`. Perform the usual steps that we did in lecture to get familiar with the dataset; e.g., you should find out the object type of `dating`, the data types of the elements in each column, the column names and the summary statistics for each column etc.  Also, you should take a look at the first and the last few rows of the dataset to get an idea on the structure of the dataset.  Please make sure that you show your code and output.
+
+(Fill in blanks.) `dating` has 8378 rows and 21 columns. The
+R object type of `dating` is data frame or table.  The data type of the elements in each column is shown in my output below.
+
+```{r question-1}
+dating = readr::read_csv(file = '/Users/brittneybarnwell/Downloads/Project_1_other_files/Speed_Dating_Subset.csv')
+dating
+# object type of dating
+class(dating)
+# data types of the elements in each column
+class(dating$iid)
+class(dating$gender)
+class(dating$wave)
+class(dating$wave)
+class(dating$match)
+class(dating$dec_o)
+class(dating$age)
+class(dating$exphappy)
+class(dating$attr1_1)
+class(dating$sinc1_1)
+class(dating$intel1_1)
+class(dating$fun1_1)
+class(dating$amb1_1)
+class(dating$shar1_1)
+class(dating$dec)
+class(dating$attr)
+class(dating$sinc)
+
+# column names
+colnames(dating)
+
+# summary statistics for each column
+summary(dating$iid)
+summary(dating$gender)
+summary(dating$wave)
+summary(dating$wave)
+summary(dating$match)
+summary(dating$dec_o)
+summary(dating$age)
+summary(dating$exphappy)
+summary(dating$attr1_1)
+summary(dating$sinc1_1)
+summary(dating$intel1_1)
+summary(dating$fun1_1)
+summary(dating$amb1_1)
+summary(dating$shar1_1)
+summary(dating$dec)
+summary(dating$attr)
+summary(dating$sinc)
+
+# the first and last few rows of the dataset
+head(dating)
+tail(dating)
+```
+
+------
+
+## Question 2 Design of the experiment <!---19 pts--->
+
+I have included a copy of the paper where the original dataset was published in (see *Gender_Differences_in_Mate_Selection.pdf*).
+Please read the part of the *EXPERIMENTAL DESIGN AND DATA DESCRIPTION* section that is on pages 676-678 and answer the following question.
+
+
+
+### Part a (2 pts)
+
+Who are the participants in the study?  Note that this group is from a very specific population so it might not be appropriate to generalize the analysis results of this project to a different population. No code is required for this part.
+
+> The participants were drawn from students in graduate and profesisonal schools at Columbia University. They were recruited through a combination of mass e-mail and fliers posted throughout the campus and handed out by research asssistants
+
+
+### Part b (2 pts)
+
+The file `Speed Dating Data Key.pdf` includes the variable definitions for all the variables in the original dataset for the paper.  Please read through this document; it should familiarize you with the design of the experiment.  
+
+To save you time, a list of the relevant definitions/meanings of the variables in the dataset `dating` is provided below.  Please make sure that you read through `Speed Dating Data Key.pdf`; just looking at the variable definitions below will not give you enough information to do the analysis correctly for the project.
+
+------
+
+The variables are currently recorded as numeric, and their respective ranges are listed in the parentheses:
+
+
+*  **iid**:  Unique participant id (1-552)  
+*  **gender**:  Male indicator (0/1): 1 = male, 0 = female  
+*  **wave**:  Session id (1-21)  
+*  **match**:  Match indicator (0/1): 1 = yes, 0 = no  
+*  **dec_o**:  Partner's decision, night of (0/1): 1 = yes, 0 = no  
+*  **age**:  Age (18-55)  
+*  **exphappy**:  Expected satisfaction with people met at event (1-10)  
+*  **attr1_1**: Stated importance of attraction (0-100)  
+*  **sinc1_1**: Stated importance of sincerity (0-100)  
+*  **intel1_1**: Stated importance of intelligence (0-100)  
+*  **fun1_1**: Stated importance of fun (0-100)  
+*  **amb1_1**: Stated importance of ambition (0-100)  
+*  **shar1_1**: Stated importance of shared interests (1-100)  
+*  **dec**: Desire to see the partner again (0/1): 1 = yes, 0 = no   
+*  **attr**: Partner's attractiveness (1-10)  
+*  **sinc**: Partner's sincerity (1-10)  
+*  **intel**: Partner's intelligence (1-10)  
+*  **fun**: Partner's fun (1-10)  
+*  **amb**: Partner's ambition (1-10)  
+*  **shar**: Partner's shared interests (1-10)  
+*  **prob**: How probable do you think it is that your partner wants to see you again? (1 = not probable, 10 = extremely probable) (0 - 10)  
+
+------
+
+What does `dec_o = 1` mean, and what does `dec = 1` mean?  What is the difference in meaning between the two variables?  Please keep this distinction in mind for the rest of the analysis.  No code is required for this part.
+
+> The main variable of interest is the Yes/No decision of subject i with respect to a partner j, which we denote by Decision sub ij. The value 1 is a Yes and 0 is No. dec represents subject i with respect to dec_o for partner j's decision on the night of.
+
+### Part c (3 pts)
+
+The data of only 14 of the speed dating sessions were used (see table I on page 678) in the paper.  How many sessions does our dataset `dating` cover?
+
+(Fill in blanks) There are 21 unique sessions included in this dataset.
+
+```{r question-2c}
+library(dplyr)
+dating |>
+  distinct(wave) |>
+  nrow()
+
+```
+
+
+### Part d (6 pts)
+
+(Fill in blanks) There are 551 unique participants included in this dataset, of which 274 are women and 277 are men.
+
+```{r question-2d}
+# unique number of participants included in the data set
+dating |>
+  distinct(iid) |>
+  nrow()
+
+# number of males and females
+# number of males
+dating |> 
+  filter(gender == 1) |> 
+  distinct(iid) |> 
+  nrow()
+# number of females
+dating |> 
+  filter(gender == 0) |> 
+  distinct(iid) |> 
+  nrow()
+```
+
+
+### Part e (6 pts)
+
+For each speed dating session do we always have the same number of female and male participant?  Construct a data frame with four columns.  The first column, `wave`, lists the wave numbers of the sessions where the numbers of the female and male participants are *not* equal. The second and third columns, `female_no` and `male_no`, list the numbers of the female and male participants in the session, respectively.   The last column, `male_minus_female`, lists the number of male participants minus the number of female participants for the session.  The number of the rows of the data frame should be the total number of sessions where the numbers of the female and male participants are *not* equal.  Make sure that you display this data frame in the output of your code.
+
+```{r question-2e}
+library(dplyr)
+library(tidyr)
+gender_ratio <- dating |>
+  group_by(wave, gender) |>
+  summarise(count = nrow(unique(data.frame(iid)))) |>
+  pivot_wider(names_from = gender, values_from = count,
+                     names_prefix = "gender_") |>
+  mutate(female_no = gender_0, male_no = gender_1, male_minus_female = male_no - female_no) |>
+  filter(female_no != male_no) |>
+  select(wave, female_no, male_no, male_minus_female)
+gender_ratio
+```
+
+
+(Fill in blanks) According to the data frame that I produced,  the wave id numbers of the sessions with more female participants are 2, 13, and 14, and the wave id numbers of the sessions with more male participants are 5, 15, 16, 17, and 20.
+
+Hint 1: You might consider using a pivot function.  
+Hint 2: The following example shows how to change the column names of a data frame.
+
+```{r}
+library(ggplot2)
+# create a data frame for the example
+df = tibble::tibble(c1 = 1:3, c2 = letters[1:3], c3 = 10:8)
+df
+colnames(df) # colnames() returns the column names of the input
+
+# assign a new column name to the 2nd column
+colnames(df)[2] = 'col2'
+df
+
+# assign new column names to the 1st & 3rd columns
+colnames(df)[c(1, 3)] = c('column1', 'column3')
+df
+```
+
+
+-------
+
+## Male and female behavior
+
+## Question 3 <!---38 pts--->
+
+### Part a (9 pts)
+
+Recall that `prob` is the *rating [given by the participant] on the expected probability that the partner would want to see the participant again* (see question 2.b).  For the two genders we would like to analyze and compare the participants' perception of their partners' romantic interest.  Think about how you can extract this piece of information from the dataset and what is a good way to display it.  
+
+Make a line plot.  The plot should have two lines, one for each gender.  The x-coordinate of the plot should be the unique values of `prob` and the y-coordinate should be the fraction of the times the partner would like to see the participant again (when the participant gave the partner a `prob` rating `x`).  You do not need to plot the part of the data where the `prob` values are missing, but the missing data actually reveal some interesting information.
+
+Remark:  This question could seem very confusing if you just try to follow the description for the plot.  It is important that you keep in mind the goal of the plot.  I suggest that you sketch the plot on a piece of paper to understand the meanings of the quantities that you need for the plot before coding.
+ 
+```{r}
+prob_frac <- dating |>
+  filter(!is.na(prob)) |>               
+  group_by(prob, gender) |>              
+  summarise(frac = mean(dec == 1))
+
+ggplot(prob_frac, mapping = aes(x = prob,
+                      y = frac,
+                      color = factor(gender))) +
+  geom_line() +
+  labs(
+    title = "Fraction of Desire to see Partner Again vs.\n Probability of Partner Wanting to See you Again")
+```
+ 
+
+### Part b (4 pts) 
+
+Based on your graph in part a, the gender that has a more optimistic rating system (i.e., more optimistic about that their partners would want to see them again) is
+
+(A.) Female  
+(B.) Male
+
+**Answer**: 
+(B.) Male
+
+### Part c (11 pts) 
+
+We want to find out if men or women are more likely to want to see their speed dating partners again.
+
+Make two histograms, one for each gender, to answer the question above; the histograms should display the distribution of the percentage of times a participant would like to see his/her speed dating partner again.  Each participant should contribute exactly one data point for making the histograms.  The area on the bins should represent proportion. (Reminder: Whenever you are making a comparison of multiple distributions, you should make sure that the graphs are plotted on the same scale and share the same coordinates.)
+
+```{r question-3c}
+men_dec_prop <- dating |>
+  group_by(iid, gender) |>
+  summarise(prop = mean(dec)) |>
+  filter(gender == 0)
+
+women_dec_prop <- dating |>
+  group_by(iid, gender) |>
+  summarise(prop = mean(dec)) |>
+  filter(gender == 1)
+
+dec_prop <- dating |>
+  group_by(iid, gender) |>
+  summarise(prop = mean(dec))
+
+ggplot(dec_prop) +
+  geom_histogram(mapping = aes(x = prop, y = after_stat(density), fill = factor(gender)), color = "white") +
+  labs(title = "Combined Likelihood of Men/Women Wanting to See Partner Again")
+
+ggplot(men_dec_prop) +
+  geom_histogram(mapping = aes(x = prop, y = after_stat(density)), color = "white", fill = "steelblue") +
+  labs(title = "Likelihood of Men Wanting to See Partner Again")
+
+ggplot(women_dec_prop) +
+  geom_histogram(mapping = aes(x = prop, y = after_stat(density)), color = "white", fill = "salmon") +
+  labs(title = "Likelihood of Women Wanting to See Partner Again")
+```
+
+Have a visual examination of the histograms.  Based on the histograms, are men or women more likely to want to see their speed dating partners again?
+
+(A.) Female  
+(B.) Male
+
+**Answer**: 
+(A.) Female
+
+
+### Part d (4 pts)
+
+Are the shape of the histograms in Part c roughly symmetric?  If not, do they have a long right/left tail?
+
+> The shape of the female likelihood histogram has a longer right tail while the shape of the male likelihood histogram is roughly symmetric.
+
+
+### Part e (4 pts)
+
+From the histograms in Part c we see that some male/female participants would like to have a subsequent meeting with every partner that they met, while other participants had no interest in meeting anyone a second time at all.  Let's call these people the "extreme" participants.  Use the data that you have (i.e., *do not estimate* these quantities from the histogram), and fill in the blanks with numbers for the sentences below.  
+
+6 male verse 14 female participants want to meet again with every partner that they met at the speed dating event.
+
+22 male verse 9 female participants have no interest in meeting any of their speed-dating partners in the future.
+
+```{r}
+# want to meet again with every partner that they met
+men_dec_prop <- dating |>
+  group_by(iid, gender) |>
+  summarise(prop = mean(dec)) |>
+  filter(gender == 0, prop == 1) |>
+  nrow()
+
+women_dec_prop <- dating |>
+  group_by(iid, gender) |>
+  summarise(prop = mean(dec)) |>
+  filter(gender == 1, prop == 1) |>
+  nrow()
+
+men_dec_prop
+women_dec_prop
+
+# have no interest in meeting any of their speed-dating partners
+men_dec_prop <- dating |>
+  group_by(iid, gender) |>
+  summarise(prop = mean(dec)) |>
+  filter(gender == 0, prop == 0) |>
+  nrow()
+
+women_dec_prop <- dating |>
+  group_by(iid, gender) |>
+  summarise(prop = mean(dec)) |>
+  filter(gender == 1, prop == 0) |>
+  nrow()
+
+men_dec_prop
+women_dec_prop
+```
+
+
+### Part f (2 pts)
+
+Were the values for the variable `exphappy` recorded before, during, or after the speed dating event?  Note that the value for `exphappy` was only recorded once in time so this value should be identical for all entries for a given participant. No code is required for this part.
+
+> The variable exphappy was recorded before the speed dating event to gauge how happy participants expected to be with the people they met.
+
+### Part g (4 pts)
+
+Verify that the values for `exphappy` are identical for each participant by calculating a numeric summary statistic of all the `exphappy` values of each of the participants.  (Hint: This numeric summary statistic's value is zero if and only if all the `exphappy` values of a participant are identical.)  Sum up the absolute values of this numeric summary statistic's values for all participants to show that the `exphappy` are identical for each participant in the dataset.  You can disregard the NA values in `exphappy`. 
+
+Reminder: `abs(x)` computes the absolute value of a vector `x`.
+
+```{r question-3f}
+dating |>
+  select(iid, exphappy) 
+# variance is zero for all identical values
+happy_verify_all <- dating |>
+  group_by(iid) |>
+  summarise(happy_var = var(exphappy, na.rm = T))
+happy_verify_all
+
+# double checking that all participants have a variance of zero
+happy_verify_diff <- dating |>
+  group_by(iid) |>
+  summarise(happy_var = var(exphappy, na.rm = T)) |>
+  filter(happy_var != 0)
+happy_verify_diff
+
+# total variance is zero across all participants
+happy_verify_all |>
+  summarise(total = sum(abs(happy_var), na.rm = T))
+```
+
+
+
+## Question 4 <!--8 pts-->
+
+
+
+Below is the histogram for a dataset.  
+
+```{r fig.width=9, fig.height=7,echo=FALSE}
+#Make sure you have these libraries installed.
+#This displays an image of the figure
+library(png)
+library(grid)
+img <- readPNG("/Users/brittneybarnwell/Downloads/Project_1_other_files/problem3d.png")
+grid.raster(img)
+```
+
+Use the histogram to select the best answer for each of the questions below.  No explanation is required.
+
+### Part a (4 pts)
+
+The minimum of the dataset is approximately around
+
+(A.) -10  
+(B.) 0  
+(C.) 5  
+(D.) 17  
+(E.) 20  
+
+**Answer**: 
+> (C.) 5
+
+### Part b (4 pts)
+
+You can assume that there are no data points falling on the end points of the bins on the histogram.  The percentage of the data points in the dataset that are less than or equal to 20 or greater than or equal to 30 (i.e., the percentage of the data points falling on the interval {$(-\infty, 20] \cup [30, \infty)$} ) is about
+
+(A.) 85%  
+(B.) 90%  
+(C.) 92%  
+(D.) 95%  
+(E.) 97%  
+
+**Answer**: 
+> (B.) 90%
+
+
+## Question 5 <!---32 pts---> Self-reported preferences v.s. actual preferences
+
+On the survey that were filled out before the speed dating event, the participants were asked to rank a set of qualities that they were looking for in the opposite sex.  These qualities are: 
+
+* Attractiveness
+* sincerity
+* intelligence
+* fun
+* ambition
+* having shared interests  
+
+In this problem we are trying to find out if people's professed thoughts are consistent with their selection criteria.  Note that due to the large number of missing values for the variables that we use for this problem the results of the analysis might not be very reliable; nevertheless, we just want to have some fun and see what patterns we can find in the data!
+
+### Part a (22 pts)
+
+For each gender, we want to make two side-by-side boxplots.  The first plot is for comparing the distributions of the self-reported importance values across the six personality quality attributes.  The second one is for comparing the distributions of the average rating difference between the rejected and the accepted groups, where the *average rating difference* is defined by the difference in the average ratings between the groups that were accepted and rejected by the participant.  For example, for the quality attractive, the average rating difference for a particular participant is 
+
+> average `attr` rating among the dates accepted by participant - average `attr` rating among the dates rejected by participant
+
+
+Make the 4 side-by-side boxplots.  You can see examples of these plots in Part c for the female group (Part c shows only the plots for the female participants; however, you can place the plots for female and male participants next to each other).  
+
+In order to use as much data as possible, you should not use `na.omit()` on the dataset and should use the `na.rm` argument in your function whenever you are aggregate the data.
+
+Hint 1: You can use column indices and names at the same time when you use the `select()` function.  For example,
+
+```{r}
+library(dplyr)
+# iris is a built-in data frame in R
+names(iris)
+
+# select the 5th column and the columns of which names 
+# ending with the word 'Width' in iris
+iris %>% select(5, ends_with('Width')) %>% head()
+```
+
+Hint2:  To solve the question, it is very important that you understand the exact layout of the original dataset (e.g., what does each row correspond to? What does each column record? What are the rules of the speed dating event?)
+
+```{r question-5a}
+library(dplyr)
+library(tidyr)
+personality <- dating |>
+  group_by(iid) |>
+  select(attr, sinc, intel, fun, amb, shar, dec, gender) 
+personality
+
+personality2 = personality |> 
+  select(attr, sinc, intel, fun, amb, shar, dec, iid, gender) |>
+  pivot_longer(cols = c(attr, sinc, intel, fun, amb, shar), 
+               names_to = "personalities",
+               values_to = "values") |>
+  group_by(personalities)
+personality2
+
+accepted <- personality2 |>
+  filter(dec == 1) |>
+  group_by(iid, personalities, gender) |>
+  summarise(accepted_avg = mean(values, na.rm = T))
+accepted
+
+rejected <- personality2 |>
+  filter(dec == 0) |>
+  group_by(iid, personalities) |>
+  summarise(rejected_avg = mean(values, na.rm = T))
+rejected
+
+diff_data <- inner_join(accepted,
+                        rejected,
+                        by = c("iid", "personalities")) |>
+  mutate(difference = accepted_avg - rejected_avg)
+diff_data
+
+ggplot(diff_data) +
+  geom_boxplot(mapping = aes(x = personalities, y = difference)) +
+   labs(title = "Rating Differences Between Accepted and Rejected Partners\n of Participants by Gender",
+       x = "Personality qualities",
+       y = "Difference in Rating") +
+  facet_grid(. ~ gender)
+
+```
+
+```{r announced-preferences-by-gender}
+library(dplyr)
+library(tidyr)
+personality <- dating |>
+  group_by(iid) |>
+  select(attr, sinc, intel, fun, amb, shar) 
+
+announced = dating |> 
+  select(attr, sinc, intel, fun, amb, shar, iid, gender) |>
+  pivot_longer(cols = c(attr, sinc, intel, fun, amb, shar), 
+               names_to = "personalities",
+               values_to = "values")
+
+ggplot(announced, mapping = aes(x = personalities, y = values)) +
+  geom_boxplot() +
+  labs(title = "Announced Preferences of Group by Gender",
+       x = "Personality qualities",
+       y = "Importance Rating") +
+  facet_grid(. ~ gender)
+```
+
+
+### Part b (4 pts)
+
+Based on your plots in part a, what are the top three qualities of a date that the male participants think are the most important to them?  What are the top three qualities that separate the rejected group from the accepted group of dates for the male participants? Use the 1st, 2nd and 3rd quartiles as measures to pick out the top qualities.  No code is required for this part.
+ 
+> Attractiveness, fun, and shared interest are the top three qualities of a date that the male participants thought were most important to them as well as the top three qualities that separate the rejected group from the accepted for the male participants. 
+
+### Part c (4 pts)
+
+Below are the two side-by-side boxplots (which might or might not produced by using the exact dataset used in this project) for the female participants.
+
+<center>![](female_preferences.png)</center>
+
+<center>![](female_self_claimed_preferences.png)</center>
+
+
+Based on the plots what are the top three qualities of a date that the female participants think were the most important to them?  What are the top three qualities that separate the rejected group from the accepted group of dates for the female participants? Use the 1st, 2nd and 3rd quartiles as measures to pick out the top qualities.  No code is required for this part.
+
+> Intelligence, sincerity, and fun are the top three qualities of a date that the female participants thought were the most important. Shared interest, fun, and actractiveness are the top three qualities that seperate the rejected group from the accepted grop of dates.
+
+
+### Part d (2 pts)
+
+
+Is the attribute intelligence among the top three announced preferences for the males and the females?  Is the attribute intelligence among the top three observed preferences for the males and the females based on the data?  
+Are the attributes attractiveness and shared interests among the top three announced preferences for the females?  What about among the top three observed preferences for the males and the females based on the data?  
+No code is required for this part.
+
+
+> The attribute intelligence is among the top three announced and observed preferences for both males and females. 
+
+> No, the attributes attractiveness and shared interest are not among the top three announced preferences for the females. However, the attribute attractiveness is among the top three observed preferences for males while the attribute shared interest isn't.
+

@@ -1,0 +1,358 @@
+---
+title: "Precept 6 Exercise"
+author: "Your Name"
+date: ""
+output:
+  pdf_document:
+    fig_caption: yes
+    toc: no
+  html_document:
+    df_print: paged
+    toc: no
+geometry: margin=1.5in
+editor_options: 
+  chunk_output_type: console
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.align="center", fig.height=5.5, fig.width=6, collapse=TRUE, comment="", prompt=FALSE, echo = TRUE, cache=F, autodep=TRUE, tidy=FALSE, message = F, warning = F,  tidy.opts=list(width.cutoff=60))
+options(width=80)
+```
+
+# Objectives
+
+* study functions for simulations: `set.seed()`, `sample()`;
+* Learn functions in the `{purrr}` package--the `map()` function family:  `map()`, `map_dbl()`, `map_int()`, `map_chr()`, `map_lgl()`;
+* Join list elements by rows or by columns: `list_rbind()`, `list_cbind()`
+* Understand the Central Limit Theorem (CLT);
+* Understand the concepts of independent events, mutually exclusive events, and conditional probability.
+
+
+
+# Key concepts
+
+## Introduction
+
+---------
+
+In this precept we will go over some programming techniques that will be useful for running simulations.  Here, *simulation* refers to the imitation of a process.  Computer simulations are often used to study the behavior of certain process that is of interest.  Let's say we want to use a sample mean value to approximate the population mean.  We want to know how good our approximation is.  If we had unlimited resources, we could repeat the sampling procedure, draw many many independent samples in the same way that we drew our initial sample, and then calculate the sample means for all the samples.  From all the sample means we can then get an idea of how far a typical sample mean is from the population mean; i.e., we can study the variability of the sample means around the population mean.  While this approach sounds logical, having such abundant of resources is almost impossible.  This is the reason why people invented computer simulations.  Computer generated samples are much cheaper and they provide us a way to study the relationship between the sample quantity and the population quantity that the sample quantity aims to approximate.
+
+
+
+---------
+
+## R programming
+
+--------
+
+
+### set.seed()
+
+set.seed() allows us to generate the same result each time when we generate random numbers; set.seed() is often used to produce reproducible analysis.
+
+
+### sample()
+`sample()` takes a sample of the specified `size` from the elements in `x` either with or without `replacement`.
+
+`sample(x, size, replace = FALSE, prob = NULL)`
+
+```{r}
+# set.seed() allows everyone running this code chunk 
+# to get the same outputs
+set.seed(7899)
+
+# The following draws a sample of size 4 without
+# replacement from the set of numbers {1, 2, 3, 4}
+sample(x=(1:4), size = 4, replace = F)
+
+# The following does not work because the sample is taken
+# without replacement and we have only 4 items
+# to sample from 
+# sample(x=(1:4), size = 6, replace = FALSE)
+# We can't draw a sample of size 6 without replacement from just 4 items
+
+# The following draws a sample of size 4 with
+# replacement from the set of numbers {1, 2, 3, 4}
+sample(x=(1:4), size = 6, replace = T)
+
+# give more weight to 1--more likely to get 1
+sample(x=(1:4), size = 6, replace = T, 
+       prob = c(.9, .1, .1, .1))
+
+```
+
+
+
+### `map()` function family:  `map()`, `map_dbl()`, `map_int()`, `map_chr()`, `map_lgl()`
+
+All these functions are from the `{purrr}` package. In general, `map(.x, .f)` applies a function `.f` to each element in a list or a vector, .x.
+
+
+--------
+
+
+##### Example for functions in the `map()` family
+
+We will first make a list and a vector for the example.
+
+```{r}
+# create a list
+l = list(elt1 = c(3, 1, 0, 91), elt2 = 4:11, elt3 = rep(c(4:6), each = 3))
+l
+
+# create a vector
+v = c(8, 2, 10, 15, -1, 5, 3)
+```
+
+We can now demonstrate how the `map()`-like functions work for a one-dimensional object.  First, for a list:
+
+```{r}
+# A simple example for a list
+
+library(purrr)
+# get the maximum of each element in `l`
+map(l, max)
+# display the output as a vector:
+map_dbl(l, max)
+# display the output as a data frame:
+map_df(l, max)
+
+# A more complicated example for a list
+
+# get the .6 quantile of each element in `l`
+# can also be written as `map(l, \(x)quantile(.x, p = .6))`
+map(l, function(x){quantile(x, p = .6)}) 
+# the code above is also equivalent to `map(l, quantile, p = .6)`
+# display the output as a vector:
+map_dbl(l, function(x){quantile(x, p = .6)})
+# display the output as a data frame:
+map_df(l, function(x){quantile(x, p = .6)})
+```
+
+Now, for a vector:
+
+```{r}
+# raise to the power specified by the element for 2:
+map(v, function(x){2^x})
+# display the output as a vector:
+map_dbl(v, function(x){2^x}) # this is the same as `2^v`
+# display the output as a data frame:
+map_df(v, function(x){c(two_to_power = 2^x)})
+
+```
+
+
+
+
+
+
+# Exercises
+
+1. Run the line below and it will generate a vector (named `pop_unif`) of 1000 values; treat this vector of values as your population.  Note that in real life we will usually not be able to see all the numbers in the population.  However, in this made-up example, we know exactly what the numbers are in the population.
+
+```{r}
+set.seed(7891)
+# please don't worry about how pop.unif is generated
+pop_unif = runif(n=1000, min=200, max = 500)
+```
+
+
+Draw a histogram of these values so that you can get an idea of how the distribution of these 1000 points are like.  You can use the following for the title and labels.
+
+```
+  labs(title = 'Distribution of the population data',
+       x = 'Data point values', y = 'Density')
+```
+
+```{r}
+pop_df <- data.frame(pop_unif)
+ggplot(pop_df) + 
+  geom_histogram(mapping = aes(x = pop_unif, 
+                               y = after_stat(density)), 
+                 binwidth = 5, color = 'white') +
+   labs(title = 'Distribution of the population data',
+       x = 'Data point values', y = 'Density')
+
+```
+
+(a) Write a function `sample_once(iter_no, pop, sample_size)`.  `sample_once()` should take a vector `pop` and treats `pop` as the population data and draw a sample of `sample_size` with replacement from `pop`.  Then, `sample_once()` should output the sample mean. `iter_no` is the iteration number that does not affect the output of the function at all(try assigning different values to `iter_no`, it should not change the function output as long as you use the same seed), so `iter_no` will not show up in the function body at all.  It will become more apparent in the next part why we will need this input argument for the function.
+
+Make sure that you test your function to make sure that it works properly.
+
+
+```{r}
+sample_once <- function(iter_no, pop, sample_size) {
+  mean(sample(pop, size = sample_size, replace = T))
+}
+set.seed(230)
+sample_once(5, pop_unif, 4)
+```
+
+
+
+
+(b) Use `sample_once(iter_no, pop, sample_size)` combined with one of the functions in the `map()` family.  Do the following 10,000 times: take a sample of size 100 with replacement from the vector `pop_unif` and calculate the sample mean of the sample.   
+
+Store the 10,000 sample means in a vector named, `sample.means`. Use `set.seed(8907)`.
+
+```{r}
+set.seed(8907)
+sample.means <- map_dbl(1:10000, sample_once, pop = pop_unif, sample_size = 100)
+sample.means
+```
+
+
+
+(c) Calculate the mean and the SD of the sample means of the 10,000 samples.
+
+```{r}
+ten_thous_means <- mean(sample.means)
+ten_thous_means
+ten_thous_sd <- sd(sample.means)
+ten_thous_sd
+
+```
+
+
+(d) Calculate the mean and sd of the original population.
+
+```{r}
+orig_means <- mean(pop_unif)
+orig_means
+orig_sd <- sd(pop_unif)
+orig_sd
+```
+
+
+
+(e) Compare (just by eyeballing the numbers) the mean of your sample means to the mean of the population distribution.  Also, compare the sd of your sample means to $\Big\{ \frac{1}{\sqrt{sample \ size}}  (sd\ of\ the\  original\ distribution)\Big\}$. Are the numbers of the same order of magnitude?  Or do the numbers differ by an order of magnitude?
+
+```{r}
+ten_thous_means
+orig_means
+
+ten_thous_sd
+orig_sd / sqrt(100)
+```
+
+> When comparing, both the mean and sd of the sample means and the population distribution are at the same order of magnitude.
+
+(f) Modify your codes in part (b) and make a function `repeat_sample(pop_data, tot_iteration, s_size)` where 
+
+* `pop_data`: the vector of the values in the population;
+* `tot_iteration`: the number of times you are going to iterate the sampling procedure (10,000 in the case above);
+* `s_size`: the sample size for each iteration (100 in the case above).
+
+The function should output the histogram of the sample means--to achieve this, just put the code to make the histogram as the last part of the code in the function body. 
+
+Also, since we will be making comparison of the sample mean distributions across different sample sizes, it will be good to set all the graphs to have the same scale.  To make sure that the histograms have the same range for the x-axis, we can use the `xlim()` function with the `ggplot()` function.  See the first example on the help page of `xlim()`.
+
+```{r tidy = F}
+
+repeat_sample <- function(pop_data, tot_iteration, s_size) {
+  samples <- map_dbl(1:tot_iteration, sample_once, pop = pop_unif, sample_size = 100)
+
+  pop_data_df <- tibble(samples)
+  
+  ggplot(pop_data_df) + 
+  geom_histogram(mapping = aes(x = samples, y = after_stat(density)), 
+                 binwidth = 3, color = 'white') +
+    xlim(200, 500) +
+   labs(title = 'Distribution of sample means',
+       x = 'Sample mean', y = 'Density')
+}
+
+set.seed(8907)
+repeat_sample(pop_unif, 10000, 100)
+```
+
+
+(g) For each of the sample sizes: 10, 20, 30, 50, 100, use your function in part f to generate 10,000 sample means and make the histogram, and assign the output to five new variables named `p1`, `p2`, `p3`, `p4`, and `p5`, respectively.
+
+```{r}
+set.seed(8907)
+p1 <- repeat_sample(pop_unif, 10000, 10)
+p2 <- repeat_sample(pop_unif, 10000, 20)
+p3 <- repeat_sample(pop_unif, 10000, 30)
+p4 <- repeat_sample(pop_unif, 10000, 50)
+p5 <- repeat_sample(pop_unif, 10000, 100)
+
+p1
+p2
+p3
+p4
+p5
+```
+
+
+The following code chunk displays 6 histograms.  The first histogram is for the distribution of the population, and the rest 5 are for the 10,000 means for each of the sample sizes mentioned at the beginning of the question. 
+Note that because the graphs are not on the same scale, it makes comparison difficult.  Go back to modify your function definition for `repeat_sample()` to make all the histograms to have the same x-axis limits as that for the histogram for the population data.  This can be done with adding a ggplot layer with `xlim()` (see https://ggplot2.tidyverse.org/reference/lims.html).
+
+Examine the histograms, how does the distribution of the sample mean changes as the sample size increases?  For each of the last 5 histograms where is the histogram centered?  Comment on how the shapes of the histograms change as the sample size becomes large.
+
+What we see on the histograms is a demonstration of the result of the famous theorem in statistics: the Central Limit Theorem (CLT).  The CLT says that if you repeatedly draw many many simple random  samples of size $n$ from a **population** with **mean $\mu$ and SD $\sigma$** and if the observations in the sample are approximately independent, regardless of the shape of the population distribution, **as the sample size $n$ gets larger and larger** the **distribution of the *sample means* gets closer and closer to the Normal(mean=$\mu$, SD = $\frac{\sigma}{\sqrt{n}}$) distribution**.
+
+```{r fig.widths = 8, fig.heights = 6, eval = F}
+
+p0 = ggplot(data.frame(pop_unif)) +
+  geom_histogram(mapping = aes(x = pop_unif, y = after_stat(density)),
+                 color = "white", fill = 'pink') +
+  labs(title = 'Distribution of the population data',
+       x = 'Data point values', y = 'Density') +
+  theme(text = element_text(size=5))
+
+library(gridExtra)
+gridExtra::grid.arrange(p0, p1, p2, p3, p4, p5, 
+                           nrow = 2)
+
+```
+
+> The distribution of the sample mean becomes more closely concentrated in the center (closer to the Normal due to the Central Limit Theorem) of the points as the sample size increases. The histogram is centered at a sample mean close to 350. The points form a steeper bell curve as sample size increases. Smaller sample sizes have more spread out data points in comparison to larger sample sizes.
+
+
+
+
+
+2. **Poverty and language.** The American Community Survey is an ongoing survey that provides data every year to give communities the current information they need to plan investments and services. The 2010 American Community Survey estimates that 14.6% of Americans live below the poverty line, 20.7% speak a language other than English (foreign language) at home, and 4.2% fall into both categories.  Assume that the figures provided by the American Community Survey are accurate and answer the following questions. \footnotemark[1]
+
+(a) Are living below the poverty line and speaking a foreign language at home two events that are mutually exclusive?  
+
+> No, these two events are not mutually exclusive becaus P(Poverty OR Foreign language) = P(Poverty) + P(Foreign language) must be true; 31.1% != 14.6% + 20.7% so P(Poverty OR Foreign language) != P(Poverty) + P(Foreign language)
+
+(b) About what percent of Americans live below the poverty line and only speak English at home?  
+
+> P(Poverty AND English only) = P(Poverty) − P(Poverty AND Foreign language) = 14.6% − 4.2% = 10.4%
+> About 10.4% of Americans live below the poverty line and only speak English at home
+
+(c) What percent of Americans live below the poverty line or speak a foreign language at home?  
+
+> P(Poverty) + P(Foreign language) - P(Poverty AND Foreign language)= 14.6% + 20.7% - 4.2% = 35.3% - 4.2% = 31.1%
+> 31.1% of Americans live below the poverty line or speak a foreign language at home
+
+(d) What percent of Americans live above the poverty line and only speak English at home? 
+
+> P(Above Poverty AND English) = P(Above Poverty) - P(Above Poverty AND Foreign language); P(Above Poverty) = 1 - P(Below Poverty) = 100% - 14.6% = 85.4%; P(Above Poverty AND Foreign language) = P(Foreign language) - P(Poverty AND Foreign language) = 20.7% - 4.2% = 16.5%; 85.4% - 16.5% = 68.9%
+> 68.9% of Americans live above the poverty line and only speak English at home
+
+(e) Is the event that someone lives below the poverty line independent of the event that the person speaks a foreign language at home?   
+
+> No, these events are not independent because P(Poverty | Foreign language) = P(Poverty) must be true; P(Poverty | Foreign language) = P(Poverty AND Foreign language)/P(Foreign language); (4.2%/20.7%) != 14.6% so P(Poverty | Foreign language) != P(Poverty)
+
+
+\footnotetext[1]{Question was taken and modified based on a question from Diez, D. M., Barr, C. D., and Çetinkaya-Rundel, M. (2015). \emph{OpenIntro Statistics} third edition.}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

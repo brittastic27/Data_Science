@@ -1,0 +1,108 @@
+---
+title: "Week 3b Pre-lecture exercises"
+author: 
+date: ""
+output:
+  pdf_document:
+    fig_caption: yes
+  html_document:
+    df_print: paged
+geometry: margin=1in
+fontsize: 10pt
+editor_options:
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.align="center", fig.height=4.5, fig.width=5, collapse=TRUE, comment="", prompt=FALSE, echo = TRUE, cache=F, autodep=TRUE, tidy=TRUE, tidy.opts=list(width.cutoff=50))
+options(width=75)
+```
+
+Please watch the videos from the *Week3b* playlist under the *Panopto Video* tab on Canvas.  
+From now on please submit all assignments in the pdf format.  Remember that you can adjust the speed and the size of the videos too. 
+
+## Exercises
+
+We will first create two data frames for today's exercise.  The code is provided in the .rmd file.  Please just use the data frame as it is and don't worry about how the code works for this part.
+
+```{r message=F, warning=F, include=F}
+set.seed(8902) # this sets the seed for random number generation.
+# by setting the seed, everybody running the line of code below will
+# get the same numbers.
+grade = matrix(c(78, 90, 84, 95, 87) + rnorm(n=25, mean=0, sd = 2),nrow = 5)
+
+grade = data.frame(paste(rep("student", 5), 1:5, sep = ''), grade)
+names(grade) = c('student_id', paste(rep("scores_grade", 5), 1:5, sep = ''))
+
+```
+
+Take a look at the data frames to get familiar with it.
+
+```{r}
+# take a look at the dataset:  
+grade
+```
+
+1. We would like to draw a scatterplot to compare the students' performance.  All the scores should be plotted on one single graph so that we can compare the students' performance easily.  Each student's scores should have a unique color.  
+The x-axis represents the grade index (i.e., "scores_grade1", "scores_grade2", etc).  What should the y-axis represent?  What does each color on the graph represent? Answering these questions will prepare you for making the scatterplot in question 4.  You are not required to make the actual scatterplot until question 4.  
+
+>. The y-axis should represent student_id or n() for the total number of students to know which score relates to which student of the five. Each color on the graph represents a different grade index (scores_grade across the five)
+
+2. We are going to use the {ggplot2} package to make this graph.  What kind of format is best suited for the data frame used in `ggplot()`?  How many columns should this data frame has? What are these columns?  How many rows do you expect this new data frame to have?
+
+>. I could maybe use pivot_longer() to make it easier to group the grade indexes in this data frame. The data frame should have 3 columns, one representing student_id, one representing which grade index (grade1, grade2, etc) a score correlates to, and the other representing a holistic representation of each students' performance
+through grade index. The data frame should have 25 rows for each grade index for each of the 5 students
+
+3. Reshape the original the data frame into the format that you described in question 2.  If you need to refer to the names of multiple columns that start with the same set of letters, the `starts_with()` function might be handy (see example below).  Verify the number of columns and rows in this data frame with your answer to question 2.
+
+```{r message = F}
+library(dplyr)
+head(iris)
+
+# select the columns that start with 'Sepal'
+iris |> select(starts_with('Sepal')) |> head()
+```
+
+
+4. Make the scatterplot with the ggplot package.
+
+Note that the functions in {ggplot2} package allow you to plot a character or factor vector for the x- or y-axis.  The factor levels or the character elements will be placed on the axis and will be equally spaced.  Here is an example,
+
+```{r message=F, warning=F, eval=F}
+library(babynames)
+library(dplyr)
+library(ggplot2)
+
+# make a data frame for the example
+sm.names = babynames %>% 
+           filter(name %in% c('Mary', 'Anna', 'Emma', 'Elizabeth') &
+                  sex == 'F' &
+                  year == 1880)
+sm.names
+
+# make the scatterplot with the example data frame
+ggplot(sm.names) +
+  geom_point(mapping = aes(x = name, y = n))
+
+```
+
+Also, when coloring points on a scatterplot, it will be better to use the `color` input argument than to use `fill`.
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+
+grade_plot <- grade |>
+  group_by(student_id) |>
+  select(starts_with('scores_grade')) |>
+  pivot_longer(cols = starts_with('scores_grade'), names_to = "scores_grade", values_to = "score_vals")
+
+  
+ggplot(grade_plot) +
+  geom_point(mapping = aes(x = score_vals, y = student_id, color = scores_grade)) +
+  labs(title = "Comparison of Student Performance based on Scores",
+       x = "Grade Index Value",
+       y = "Student ID",
+       color = "Grade Index")
+```
