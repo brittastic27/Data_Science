@@ -1,0 +1,415 @@
+---
+title: 'SML 201 Project 2: 2016 U.S. Presidential Election'
+author: ''
+date: "`r Sys.Date()`"
+output:
+  pdf_document:
+    dev: png
+    fig_caption: yes
+    toc: yes
+    toc_depth: 4
+  html_document:
+    df_print: paged
+geometry: margin=1in
+fontsize: 10pt
+subtitle: Solutions
+editor_options:
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.align="center", collapse=T, comment="", prompt=F, 
+                      echo = T, cache=F, autodep=T, tidy=F, dev='png', 
+                      dpi=300, out.height = '50%', out.width = '100%',
+                      tidy.opts=list(width.cutoff=63), dev='png')
+options(width=63)
+
+```
+
+**Project 2 is due by 11:00pm EST on Friday November 14.** Please submit **both a .pdf and a .rmd** files on Gradescope by the deadline.
+
+
+**Please do not email your work to any of the instructors in any case** (unless you have no access to Gradescope at the time when the assignment is due--in this case please email the Head TA (see syllabus for contact info) both copies of your .pdf and .rmd files before the deadline and upload the unaltered copies of the files to Gradescope as soon as you regain access to Gradescope).  We need your files to be on Gradescope in order to grade them.  Thus, even if you are late, please still submit the files on Gradescope.
+
+
+This assignment can be completed in groups of up to 3 students. Feel free to use Ed Discussion to recruit team members.  It is okay to work by yourself, if this is preferred.   You are welcome to get help (you can either ask questions on Ed Discussion or talk to the instructors during office hours) from the instructors; however, please do not post code/solutions on Ed Discussion on a public post.  Please see the *Academic Integrity Policy* tab on Canvas about the course policy.
+
+For **problem sets and projects** you may not work with a given student on more than **two assignments**.  For example, if you work with student A on Problem set 1 and Project 1, then you cannot work with student A on any other problem sets and projects. 
+
+When working in a group it is your responsibility to make sure that you are satisfied with all parts of the report and the submission is on time (e.g., we will not entertain arguments that deficiencies are the responsibility of other group members).  We expect that you each work independently first and then compare your answers with each other once you all finish, or help each other if someone in your group gets stuck.  Failing to make contributions and then putting your name on a report will be considered a violation of the honor code.  **Please do not divide work among group mates.**  Everyone in your group is responsible for being able to explain the solutions in the report.
+
+
+For all parts of this project, you **MUST** use R commands to print the output as part of your R Markdown file. You are not permitted to find the answer in the R console and then copy and paste the answer into your report.  **All code and outputs should be visible on your pdf file.**
+
+**If you are completing this project in a group**, please have only **one** person in your group turn in the .Rmd and .pdf files.  Make sure that this person selects the names of all the group mates on Gradescope--if you are not sure about how to make a group submission please see the video posted under *Assignments > Precept submission instructions* on Canvas.  To receive full credit for this assignment, you must select the pages properly for each problem on Gradescope; again, if you are not sure about how to do this, please watch the video mentioned.
+
+Late problem sets and projects (i.e., being late even after you use a late pass) will be penalized at intervals rounded up to multiples of 24 hours. You will receive a 10% deduction on the score for each 24-hour-late-interval.  For example, if you are 3 hours late, 10% off or if you are 30 hours late, 20% off.
+
+
+----
+
+Please type your name(s) after "Digitally signed:" below the honor pledge to serve as digital signature(s). 
+
+> I pledge my honor that I have not violated the honor code when completing this assignment.
+
+Digitally signed:
+
+Brittney Barnwell
+
+**When reporting numerical findings in the [narrative part]{.underline} of your report, please round answers to an appropriate number of digits.  This means that usually having 2 decimal places (e.g., 45.71) is good; however, if the answer has a lot of leading zeros (e.g., 0.000034), you might want to include at 2 or more non-zero digits. Just make sure that you do not report answers in long strings of numbers (e.g., 5.043289); this will make your report look unprofessional.**   When printing out a data frame as part of an answer, you can use `print.data.frame(your_df, digits = 2)`; this will allow you to print out the entire data frame `your_df` and suggest to `R` that you want to have *at least 2* significant digits--you might want to adjust the value for `digits` based on individual cases.  **Remember not to round intermediate calculations and please avoid hard-coding.**  For example, if we updated the dataset *loan_data.csv* with additional rows, your code should still work without any modifications. 
+
+----
+
+## Report quality
+
+Unless otherwise specified, please provide code and the output of the code to support all your answers.
+
+In general if your report contains plots, in order to receive full credits, please have sensible titles and axis labels for all your graphs and adjust values for all the relevant graphical parameters so that your plots are informative.  Also, all answers must be written in complete sentences.
+
+### (-3 pts each: code does not run; code does not have proper annotations; student did not select pages correctly for each question on Gradescope)  
+### (-2 pts each: answers are not in complete sentences; report includes an unnecessarily large chunk of a dataset.)
+
+
+
+
+## Before you start: for-loops are not allowed for this project. 
+
+
+-------
+
+
+
+**Please read and *work through all the parts* in *Project 2 Hints*.  Doing so will help you avoid making some common mistakes for this project.  Also, you will need to have the {maps} package installed for this project.**  
+
+
+
+# Objective of this project
+
+The outcome of the 2016 presidential election was a big surprise to many of us; all 6 probabilistic and 3 non-probabilistic models published on New York Times missed the election result [(click here for reference--see the university's library website about how to have free access to NY Times)](https://www.nytimes.com/interactive/2016/upshot/presidential-polls-forecast.html).  Even on November 8, 2016 (the election day) before the voting results were out Clinton was still estimated to have a winning chance of 71.4% (compared to 28.6% for Trump) by Nate Silver, a statistician who had a track record of predicting the presidential election outcomes correctly until 2016 [(click here for reference)](https://en.wikipedia.org/wiki/Nate_Silver). 
+
+Many believe that the main factor contributes toward the failure of these models was the bias in the polling data [(click here for reference)](http://www.pewresearch.org/fact-tank/2016/11/09/why-2016-election-polls-missed-their-mark/).  In this project we will explore the problems in the polling data that could potentially affect the accuracy of the presidential election prediction.
+
+# Approach
+
+The approach we will take in this project is the following.  We will combine all the poll data within each state and treat them as the data in one simple random sample.   If the data points collected in the sample were really random and independent, according to an important theorem that we learned in class, the sample mean of each state should follow a certain distribution.  In addition, if the polls were independent among the states, after standardization all the sample means from all the states should follow the same distribution and they should be independent; in that case we can think of the standardized sample means as drawing 51 random numbers independently from a common distribution.  Lastly, we will run a simulation to test if our initial assumptions (i.e., the poll data were collected randomly and independently within and between the states) were reasonable.
+
+# Background info and datasets used in this project
+
+We will use two datasets: `oct_poll.Rdata` and `2016_election_result_csv.csv` in this project.
+
+The dataset `oct_poll.Rdata` is a subset of the dataset from this website (https://www.r-bloggers.com/2016/10/fivethirtyeights-polling-data-for-the-us-presidential-election/).  `oct_poll.Rdata` contains poll data collected from polls that were taken between Oct. 1, 2016 and Oct. 27, 2016.  The original dataset was first posted on fivethirtyeight.com, a website created by Nate Silver.  (Note: Even though Silver's prediction also missed the truth, Nate Silver's model was the most robust one among all the models published on *New York Times* for predicting the 2016 presidential election result; a robust model is a model that performs well even when some of the assumptions of the model were slightly violated.) 
+
+
+
+# How did all 6 probabilistic models published on New York Times missed the election result?
+
+In this section we will study the patterns of the errors in the poll data.  We would like to answer these two questions: 
+
+* Do the errors in the poll dataset seem random? Are they distributed symmetrically around zero?   
+* Among the states with CI estimates that do not cover zero (i.e., among the states that we were confident about who the winning candidates for the states would be), how many of their CIs actually predicted the correct state winner?
+
+We will first pretend that we do not know the election results and make CI's to predict the results based on the poll data.  Then, we will compare our predictions with the actual outcomes to see if there seem to be systematic errors in the polls across the states.
+
+
+
+##  Question 1 
+
+In 2016 the election day was Nov. 8.  `oct_poll.Rdata` contains poll data collected from polls that ended between Oct. 1, 2016 and Oct. 27, 2016; the dataset has 752 rows and 6 columns.  Make sure that you saved all the datasets for this project in the R-project folder for this assignment.  Run `ls()` in R to see what R objects are in your current R environment.  Then, run `load("oct_poll.Rdata")` to load the dataset into your R environment.  Run `ls()` again and you should now see that the R object `oct_poll` is in your R environment.  Make sure that your `oct_poll` is a data frame.
+
+The descriptions of the column names are:
+
+* **state**: The state which was polled;
+* **grade**: The rating of the company taking the poll;
+* **sample.size**: Sample size of the poll;
+* **rawpoll_clinton**: The percentage of people favoring Clinton in the sample;
+* **rawpoll_trump**: The percentage of people favoring Trump in the sample;
+* **end.date**: The closing date of the poll.
+
+Note that there are multiple entries for each state since there are multiple poll agencies for each state.  Also note that on each row the percentages for Clinton and Trump do not add up to 100\% since there are other candidates.  
+
+
+###  Part a (17 pts)
+
+
+Make a data frame `poll.oct2016`; this data frame should have 4 columns:
+
+* `state`
+* `sample.size`
+* `rawpoll.clinton`
+* `rawpoll.trump`.  
+
+`poll.oct2016` should aggregate the data in `oct_poll` to the state level (we want to combine multiple polls within the same state into one sample so that for each state we have a sample that is as large as possible.) and express `rawpoll.clinton` and `rawpoll.trump` as proportions instead of percentages.  You should keep `District of Columbia` even though technically it is not a state. `poll.oct2016` should have one row for each state.  You need to be careful about how to aggregate the percentages; e.g., suppose state 1 has two polls: poll 1 has a sample of 100 and 30\% of the people in the sample voted for Clinton and poll 2 has a sample of 400 and 60% of the people in the sample voted for Clinton; then, the aggregated proportion of people voted for Clinton in the polls for state 1 should be (100 x .3 + 400x.6)/(100+400) = .54.  
+
+
+
+
+
+## Question 2
+
+### Part a (10 pts)
+
+'2016_election_result_csv.csv' contains the presidential election results for 2016.  Read in the dataset `2016_election_result_csv.csv` and name this dataset `true.perc`. Use the `dplyr::left_join()` function to merge `true.perc` with `poll.oct2016` by using the state names (To review how `left_join()` works, please see *video_4.2.03* and *video_4.2.04* in *PLE 4b*).   
+
+
+
+In addition, add the following columns to the data frame after the merger:
+
+* **poll.diff** = rawpoll.trump - rawpoll.clinton
+* **vote.diff** = trump.vote - clinton.vote
+* **deviation** = poll.diff - vote.diff
+
+Name the resulting data frame `election`.  `election` should have 51 rows and 9 columns.
+
+**Answer**
+
+
+### Part b 
+
+Choose the correct answer for each of the following questions:
+
+ 
+
+#### Part (i) (2 pt)  
+
+
+For a particular state if `poll.diff` is positive this means  
+
+(A.) for the people in the *aggregated poll* for the state there are less people 
+supporting Trump than supporting Clinton;  
+(B.) for the people in the *aggregated poll* for the state there are more people 
+supporting Trump than supporting Clinton;  
+(C.) for the people who casted their votes in the *actual election* there are 
+more voters supporting Trump than supporting Clinton within the state;      
+(D.) for the people who casted their votes in the *actual election* there are 
+less voters supporting Trump than supporting Clinton within the state;  
+(E.) Trump won the actual election at the state level;  
+(F.) Clinton won the actual election at the state level.
+
+**Answer: **  
+
+
+#### Part (ii)(4 pt)   
+
+
+For a particular state if `deviation` is positive this means
+
+(A.) Trump won the actual election at the state level;  
+(B.) Trump lost the actual election at the state level;  
+(C.) at the state level the poll over-estimated how well Trump would do in the actual election 
+compared to Clinton;  
+(D.) at the state level the poll under-estimated how well Trump would do in the actual election 
+compared to Clinton.    
+
+**Answer: **
+
+
+## Question 3
+
+### Part a (23 pts: 12 for `std.unit`, 3 for `correct.prediction`, 8 for `significant`)
+
+Create the following vectors as the additional columns of `election`:
+
+* **std.unit**: For the $i^{th}$ state `std.unit[i]` is `poll.diff[i]` in standard units assuming `vote.diff[i]` is the mean for `poll.diff[i]`; e.g., if `poll.diff[1]` is 3 SE(poll.diff for state i) above `vote.diff[i]`, `std.unit[i]` should be 3; if `poll.diff[1]` is 2.5 SE(poll.diff for state i) below `vote.diff[1]`, `std.unit[1]` should be -2.5. (You might want to use `dplyr::rowwise()`.  See *Project 2 hints* for an example of how to use the function.)
+
+* **correct.prediction**: A logical vector whose $i^{th}$ element should be `TRUE` if the aggregated poll data predicts the winning candidate for state $i$ correctly, and `FALSE` otherwise.  
+
+* **significant**: A logical vector that shows `TRUE` if the 95% CI for estimating (proportion of Trump supporters - proportion of Clinton supporters) does not cover 0, and `FALSE` otherwise.
+
+**Answer**
+
+
+
+### Part b (8 pts)
+
+Note that having a CI that is away from 0 means that we thought we had enough information from the poll data to predict which candidate would win for the state.  Use the information that you calculated in 3.a to answer the following questions:
+
+i. How many of the 95% CIs for estimating (proportion of Trump supporters - proportion of Clinton supporters) mentioned in Part (a) are away from 0?  
+ii. Among the CIs that are away from 0 how many of them predict the winning candidate of the state correctly?  
+iii. How many of the 95% CIs cover 0?  
+iv. Among the states whose CIs cover 0 how many of them predict the winning candidate of the state correctly with their `poll.diff` value?
+
+
+**Answer**
+
+
+
+###  Part c 
+
+The error for a prediction is defined as 
+
+> Prediction error := Actual value - Predicted value
+
+The errors in the polls are actually not much bigger than that in previous elections on average [(See NY Times article here)](https://www.nytimes.com/2016/11/23/upshot/election-facts-to-keep-handy-for-thanksgiving-dinner-discussion.html?_r=0).  However, the problem is that the polls that over estimated Clinton's votes are polls for the battleground states.  
+
+
+#### Part i (6 pts)
+
+In Part b.ii you reported the number of states that we thought we had enough information from the poll data to predict the winning candidate for the state.  Among the states that we thought we had enough information to make a prediction, how many incorrectly predict the winner of the state?   List the names of these states; for these states, did the polls predict that Clinton was going to win or lose the election for the state? 
+
+**Answer**
+
+
+#### Part ii (3 pts)
+
+According to 
+Wikipedia [(click here)](https://en.wikipedia.org/wiki/Swing_state) 
+
+>Election analytics website FiveThirtyEight identifies the states of Colorado, Florida, Iowa, Michigan, Minnesota, Ohio, Nevada, New Hampshire, North Carolina, Pennsylvania, Virginia, and Wisconsin as 'perennial' swing states that have regularly seen close contests over the last few presidential campaigns.  
+
+Which of the states that you identified in part i are among the swing states? 
+
+**Answer**
+
+
+#### Part iii (3 pts)
+
+We are going to plot the values of `std.unit` on the map to investigate the geographic pattern of the `std.unit` values.  Please make sure that you have installed the package {maps}. 
+
+Run the code in the following code chunk will create the function `create.map()`.  `create.map()` will make a map for the states defined by the variable `input.state`, color the states on the map according to the values in `map.var`, and then outlines the states specified by the variable `outlined.state`.  (You do not need to understand line by line how the function is being constructed; you just need to know how to use the function.)
+
+
+```{r}
+create.map = function(input.state, map.var, outlined.state){
+
+# Load package needed     
+library(ggplot2) 
+library(maps)
+library(dplyr)
+
+# Remove axes for the map  
+drop_the_axes <- theme(
+  axis.text = element_blank(),
+  axis.line = element_blank(),
+  axis.ticks = element_blank(),
+  panel.border = element_blank(),
+  panel.grid = element_blank(),
+  axis.title = element_blank()
+  )
+
+#map("world", c("USA", "hawaii"), xlim = c(-180, -65), ylim = c(19, 72))
+
+# The map should be at the state level
+states = map_data("state")  
+
+# Pull out D.C. by updating coordinates on map (scale and shift)
+states$long[states$region == "district of columbia"] =
+states$long[states$region == "district of columbia"]*10 -
+9*min(states$long[states$region == "district of columbia"]) + 4
+states$lat[states$region == "district of columbia"] =
+states$lat[states$region == "district of columbia"]*10 -
+9*min(states$lat[states$region == "district of columbia"]) - 2
+
+
+# Make data frame for the data for the map
+map.data = data.frame(state = input.state, map.var=map.var)
+names(map.data)
+names(map.data)[1] = "region"
+# map.data$region = tolower(as.character(levels(map.data$region))) 
+map.data$region = tolower(map.data$region) 
+
+
+state.map.data = inner_join(states, map.data, by = "region")
+
+# Make data for the states to be outlined on the map
+swing.outline = map_data("state", region = outlined.state)
+
+ggplot(data = state.map.data, 
+       mapping = aes(x = long, y = lat, group = group)) + 
+      geom_polygon(data = state.map.data, aes(fill = map.var), color = "gray") +
+      scale_fill_gradient2(low = "#CF142B", mid = "white", 
+                           high = "#006600", midpoint = 0) +
+      geom_path(data = swing.outline, aes(x = long, y = lat, group = group), 
+                linewidth=.7) +
+    #  ggtitle('( where diff = Trump % -Clinton %') + 
+     geom_text(label = "D.C.", x = -70, y = 36, size = 5) +
+      labs(fill = "std.unit", 
+           title = "Values for std.unit = (poll.diff - actual.diff)/SE(poll.diff)", 
+           subtitle = 'where diff = Trump % -Clinton %') +
+      coord_fixed(1.4) +
+     # scale_fill_continuous(labels = c("poll.diff")) + 
+      theme_bw() +
+      drop_the_axes 
+
+}
+
+```
+
+As an example to show how to use the function, the following code draws the states Michigan and North Carolina, colors Michigan with the color that correspond to the value 0.5 and colors North Carolina with the color that correspond to the value 1.2.  The code also outlines Michigan.
+
+```{r eval = F}
+create.map(input.state = c("Michigan", "North Carolina"), 
+map.var = c(0.5,1.2), outlined.state = c("Michigan"))
+```
+
+Use `create.map()` to plot the values of `std.unit` for each state and then outline the swing states on the map.  (Note that Alaska and Hawaii will not show up on the map because the package used to draw the map excludes these places; also, Washington D.C. will be magnified and shifted on the map so that it will be visible.)
+
+Hint: `input.state` should be a factor or a character vector of the state names, `map.var` should be a numeric vector and `outlined.state` should be a character vector of the names of the states you would like to outline.  Please make sure the `input.state` and `map.var` have the same length and the elements in both vectors are arranged in the same order.
+
+Based on the map do the polls under- or over-estimated Clinton's chance of winning for most of the swing states?  
+
+
+**Answer**
+
+
+
+
+### Part d (1 pts)
+
+Remove `eval = F` for the following code chunk.  The histogram plots the values of the poll difference in standard units.  Do the errors look like they have mean zero?
+
+
+```{r message=F, tidy = F, eval = F}
+# Generate histogram
+
+election %>% 
+  select(std.unit) %>% 
+  ggplot() +
+  geom_histogram(mapping = aes(x = std.unit, y = after_stat(density)),
+                 color = 'white', fill = 'steelblue') +
+  labs(x = 'Poll Diff. in Std. Units Relative to the Truth', 
+       title = 'Poll Difference Errors in Standard Units') + 
+  geom_vline(xintercept=0, color='red')
+
+```
+
+**Answer**
+
+
+
+
+
+
+### Part e (9 pts)
+
+According to the poll data, how many states underestimated how well Trump would do (i.e., with `std.unit` values less than zero)? Let's call this number $m$.
+
+If the errors in the poll data were random, there should be equally likely chance for a state to underestimate or overestimate Trump.  Then, the values in `std.unit` should be like 51 values drawn randomly and independently from a common distribution.
+
+What is this common distribution?  Report the numerical value(s) of the parameters of this distribution.  According to this common distribution what is the chance $g$ that the `std.unit` value for a particular state would be negative?
+
+**Answer**
+
+
+
+
+### Part f (14 pts)
+
+If the errors in the poll data were random and independent among the states, each state should have $g$ probability to underestimate how well Trump would do.  Run simulations to estimate the chance that we would have $m$ or more states that underestimated how well Trump would do in this case.
+
+The simulation procedure should be as the following:
+
+1) Use `set.seed(3400)`
+2) For one round of the simulation, we will draw a random sample of 51 (the sample represents 51 states) with replacement from the distribution mentioned in Part e.  Then, we will see if there are $m$ or more of these numbers that are negative.
+3) Repeat the process in step 2 100,000 times.
+4) What percentage of the samples have $m$ or more negative numbers?
+
+
+Based on the simulation results, is it reasonable to assume that the errors in the poll data were random and independent among the states?  Explain why.
+
+
+**Answer**
+
+
+
+
+
